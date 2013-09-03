@@ -1,4 +1,4 @@
-from lexicon.settings import WORDLIST_PATH
+# from config import WORDLIST_PATH
 from combination_generator import CombinationGenerator
 
 class WordLookup(object):

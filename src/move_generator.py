@@ -1,5 +1,5 @@
-from engine import board, move
 from word_lookup import WordLookup
+from coodrdinate import Coordinate
 
 class MoveGenerator(object):
     def __init__(self):
@@ -11,107 +11,88 @@ class MoveGenerator(object):
         starts = []
         for i in range(self.highest_start, 8):
             if horizontal:
-                starts.append(board.BoardPosition(None, [i, 7]))
+                starts.append(Coordinate(i, 7))
             else:
-                starts.append(board.BoardPosition(None, [7, i]))
+                starts.append(Coordinate(7, i))
 
         return starts
 
-    def calculate_first_move(self, tiles_in_hand):
-        possible_words = self.lookup.find_all_words(tiles_in_hand)
-
+    def calculate_first_move(self, tiles_in_hand, utility_mapper):
+        possible_words = self.lookup.find_all_words([tile.letter for tile in tiles_in_hand])
+        horizontal = [True, False]
         moves = []
 
-        horizontal = [True, False]
-
-        print "Calculating moves"
+        # print "Calculating moves"
         for o in horizontal:
             for word in possible_words:
                 for start in self.possible_starts(word, o):
-                    letters = []
-                    start_pos = start.next_pos(o, 0)
-
                     for i in range(0, len(word)):
-                        letters.append(word.upper()[i])
+                        letters.append( (start.next(o, i), Tile(word.upper()[i])) )
 
-                    moves.append(move.AIMove(letters, start_pos, o))
+                    moves.append( Move(dict(letters)) )
 
-        print "Validation moves"
-        for mv in moves:
-            mv.validate
-
-        positive_scores = [mv for mv in moves if mv.score > 0]
+        positive_scores = [move for move in moves if utility_mapper(tiles_in_hand, move.letters) > 0.0]
 
         if positive_scores:
-            to_be_played = max(positive_scores, key=lambda ps: ps.score)
-
-            letters = [bp.letter for bp in to_be_played.positions]
-            return (letters, to_be_played.positions[0].pos, to_be_played.horizontal)
-            # game.set_candidate(letters, to_be_played.positions[0].pos)
-            # if game.vaidate_candidate():
-                # game.commit_candidate()
-
+            to_be_played = max(positive_scores, key=lambda ps: utility_mapper(tiles_in_hand, ps.letters))
+            return PlaceMove(to_be_played.letters)
         else:
-            return None
+            return Pass()
 
-    def valid_moves(pos, word, horizontal, game_board):
-        x, y = pos
-        letter = game_board[x][y]
+    def valid_moves(c, word, o, board):
+        letter = b.get(c).tile.letter
 
         unchecked_starts = []
         for i in range(0, len(word)):
             if word.upper()[i] == letter:
-                if horizontal:
-                    if (x - i) >= 0 and (x + len(word) - i) <= 14:
-                        unchecked_starts.append([x - i, y])
+                if o = Orientation.horizontal:
+                    if (c.x - i) >= 0 and (c.x + len(word) - i) <= 14:
+                        unchecked_starts.append( Coordinate(c.x - i, c.y) )
                 else:
-                    if (y - i) >= 0 and (y + len(word) - i) <= 14:
-                        unchecked_starts.append([x, y - i])
+                    if (c.y - i) >= 0 and (c.y + len(word) - i) <= 14:
+                        unchecked_starts.append( Coordinate(c.x, c.y - i) )
 
         vmoves = []
         letter_pos = []
 
         for start in unchecked_starts:
             for i in range(0, len(word)):
-                nx, ny = board.BoardPosition(None, start).next_pos(horizontal, i)
-                if game_board[nx][ny] not in board.empty_locations:
-                    letter_pos.append( ([nx, ny], word.upper()[i]) )
+                coord = start.next(o, i)
+                if not b.has_tile(coord):
+                    letter_pos.append( (coord, word.upper()[i]) )
 
-            move = move.AIMove([lp[0] for lp in letter_pos], letter_pos[0][0], o)
-            if move.validate():
-                vmoves.append(move)
+            if letter_pos:
+                move = Move(dict(letter_pos))
+                if move.is_valid
+                    vmoves.append(move)
 
         return vmoves
 
-    def calculate_best_move(tiles_in_hand):
-        letters = tiles_in_hand # maybe will require extraction
+    def calculate_best_move(tiles_in_hand, board, utility_mapper):
+        letters = [tile.letter for tile in tiles_in_hand]
+        orientations = Orientation.values()
 
         moves = []
-        for coordinates in board.occupied_positions(board.game_board):
-            x, y = coordinates
-            possible_words = self.lookup.find_words_using(board.game_board[x][y], 0)
+        for coordinate in board.occupied_squares():
+            tile = board.get(coordinate)
+            possible_words = self.lookup.find_words_using(tile.letter, 0)
 
-            for horizontal in [True, False]:
+            for orientation in orientations:
                 for word in possible_words:
-                    for move in self.valid_moves(coordinates, word, horizontal, board.game_board):
+                    for move in self.valid_moves(coordinate.keys, word, orientation, board):
                         moves.append(move)
 
-        positive_scores = [move for move in moves if move.score > 0]
+        positive_scores = [move for move in moves if utility_mapper(tiles_in_hand, move.letters) > 0.0]
 
         if positive_scores:
-            to_be_played = max(positive_scores, key=lambda ps: ps.score)
-
-            letters = [bp.letter for bp in to_be_played.positions]
-            return (letters, to_be_played.positions[0].pos, to_be_played.horizontal)
-            # game.set_candidate(letters, to_be_played.positions[0].pos)
-            # if game.validate_candidate():
-                # game.commit_candidate()
-
+            to_be_played = max(positive_scores, key=lambda ps: utility_mapper(tiles_in_hand, ps.letters))            
+            return PlaceMove(to_be_played.letters)
         else:
-            return None
+            return Pass()
 
-    def think(self, tiles_in_hand, utility_mapper =None):
-        if board.occupied_positions(board.game_board):
-            return self.calculate_best_move(tiles_in_hand)
+    def think(self, tiles_in_hand, utility_mapper):
+        board = game.instance.playing_board
+        if board.occupied_squares():
+            return self.calculate_best_move(tiles_in_hand, utility_mapper)
         else:
-            return self.calculate_first_move(tiles_in_hand)
+            return self.calculate_first_move(tiles_in_hand, utility_mapper)

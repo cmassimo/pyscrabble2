@@ -1,6 +1,7 @@
 from random import shuffle, random
 
 from config import ScrabbleConfig
+from word_lookup import WordLookup
 
 class Tile(object):
     @classmethod
@@ -36,73 +37,64 @@ class Tile(object):
     def __eq__(self, other):
         self.letter == other.letter
 
+    # TODO
+    def __cmp__(self, other):
+        pass
+        
+    # TODO
+    def __hash__(self, other):
+        pass
+
 
 class TileList(list):
     def __init__(self):
-        super().__init__(self)
+        list.__init__(self)
 
-    def remove_many(self, l)
+    def remove_many(self, tiles):
+        # TODO could be improved performance-wise
+        for t in tiles:
+            el = next((x for x in self if x.letter == t.letter), None)
+            if el:
+                self.remove(el)
+            else:
+                raise (Exception(String.Format("Cannot remove tile '%c', it is not in the collection." % t.letter)))
 
-# type TileList = 
-#     inherit List<Tile>
-#     new () = { inherit List<Tile>() }
-#     new (capacity:int) = { inherit List<Tile>(capacity) }
-#     new (items:IEnumerable<Tile>) = { inherit List<Tile>(items) }
-#     new (tile:Tile) = { inherit List<Tile>( List.ofArray [| tile |] ) }
+    def shuffle(self):
+        shuffle(self)
 
-#     /// This is a dirty hack, but I'm OK with it.
-#     [<DefaultValue>] val mutable private hash : string
+    def score(self):
+        return reduce(lambda x, tile: x + tile.score, self, 0)
 
-#     member this.RemoveMany(l:seq<Tile>) =
-#         let remove i = 
-#             match this.Remove(i) with
-#             | true -> ()
-#             | false -> raise (Exception(String.Format("Cannot remove tile '{0}', it is not in the collection.", i.Letter)))
-#         l |> Seq.iter remove
-#     member this.Shuffle() = 
-#         let rng = Random();  
-#         let mutable n = this.Count  
-#         while n > 1 do 
-#             n <- n - 1 
-#             let k = rng.Next(n + 1)
-#             let value = this.[k] 
-#             this.[k] <- this.[n]
-#             this.[n] <- value
-#     member this.Score() = 
-#         this |> Seq.sumBy (fun t -> t.Score)
-#     member this.Draw(n:int) = 
-#         let ret = this.Take(n).ToList()
-#         this.RemoveRange(0, n)
-#         ret
-#     member this.TakeChar(c:char) = 
-#         let tile = Tile(c)
-#         if this.Remove(tile) then
-#             tile
-#         else
-#             raise (Exception("Tile was not found in the list."))
-#     member this.HasEqualElements(other:TileList) = 
-#         if this.Count = other.Count then
-#             //Well, this is total shit. Sorry functional purists out there, I'm on a deadline.
-#             let mutable i = 0
-#             let mutable finished = false
-#             let mutable result = true
-#             while i < this.Count && not(finished) do
-#                 if not(this.[i] = other.[i]) then
-#                     finished <- true
-#                     result <- false
-#                 i <- i + 1
-#             result
-#         else
-#             false
-#     member this.PrepareForCompare() = 
-#         this.Sort()
-#         this.hash <- this.Select((fun (t:Tile) -> t.Letter.ToString())).Aggregate((fun a b -> String.Concat(a, b))) // wow, F#/BCL interop is a total bitch
-#     override this.GetHashCode() =
-#         hash.ToString().GetHashCode()
-#     override this.Equals(o) =
-#         match o with
-#         | :? TileList as other -> this.HasEqualElements(other)                                
-#         | _ -> false
+    def draw(self, n):
+        res = self[0:n]
+        del self[0:n]
+        return res
+
+    def take_char(c):
+        el = next((x for x in self if x.letter == c), None)
+        if el:
+            self.remove(el)
+            return Tile(c)
+        else:
+            raise (Exception("Tile was not found in the list."))
+
+    def has_equal_elements(self, other):
+        if len(self) == len(other):
+            for i in len(self):
+                if self[i] != other[i]:
+                    break
+            else:
+                return True
+
+            return False
+        else:
+            return False
+
+    def __eq__(self, other):
+        if type(other) == type(self):
+            return self.has_equal_elements(other)
+        else:
+            return False
 
 class Bag(object):
     def __init__(self)
@@ -160,10 +152,10 @@ class PlaceMove(Turn):
 class Player(object):
     def __init__(self, name):
         self.name = name
-        self.tiles = []
+        self.tiles = TileList()
         self.score = 0
 
-    def notify_turn(self):
+    def notify_turn(self, game_state):
         raise NotImplementedError( "abstract method called: needs implementation" )
 
     def notify_game_over(self):
@@ -298,47 +290,62 @@ class HumanPlayer(Player):
 #     abstract member GameOver : GameOutcome -> unit
 #     abstract member TilesUpdated : unit -> unit
 
-# type Board() = 
-#     let grid : Square[,] = Array2D.init ScrabbleConfig.BoardLength ScrabbleConfig.BoardLength (fun x y -> ScrabbleConfig.BoardLayout (Coordinate(x, y))) 
-#     member this.Get(c:Coordinate) =
-#         this.Get(c.X, c.Y)
-#     member this.Get(x:int, y:int) =
-#         grid.[x, y]
-#     member this.HasTile(c:Coordinate) = 
-#         not (this.Get(c).IsEmpty)
-#     member this.Put(t:Tile, c:Coordinate) = 
-#         //if not (this.HasTile(c)) then
-#             this.Get(c).Tile <- t
-#         //else
-#           //  raise (Exception("A tile already exists on the square."))
-#     member this.Put(m:Move) = 
-#         m.Letters |> Seq.toList |> Seq.iter (fun (pair:Collections.Generic.KeyValuePair<Coordinate, Tile>) -> this.Put(pair.Value, pair.Key))
+class Board(object):
+    def __init__(self):
+        length = ScrabbleConfig.board_length
+        self.grid = [ [ ScrabbleConfig.board_layout( Coordinate(i, j) ) for j in xrange(0, length) ] for i in xrange(0, length) ]
+                
+    def get(self, coord):
+        return self.get(coord.x, coord.y)
 
-#     member this.OccupiedSquares() : Map<Coordinate, Square> = 
-#         Map.ofList [ for i in 0 .. (Array2D.length1 grid) - 1 do
-#                         for j in 0 .. (Array2D.length2 grid) - 1 do
-#                             let s = Array2D.get grid i j
-#                             if s.Tile <> null then
-#                                 yield (Coordinate(i, j), s) ]
+    def get(self, x, y):
+        try:
+            return self.grid[x][y]
+        except:
+            return None
 
-#     member this.HasNeighboringTile(c:Coordinate) =
-#         c.Neighbors() |> Seq.exists (fun n -> this.HasTile(n))
+    def has_tile(self, coord):
+        return self.get(coord) == None
 
-#     member this.PrettyPrint() = 
-#         printf "   "
-#         for j in 0 .. (Array2D.length2 grid) - 1 do
-#             printf "%2i " j
-#         printfn ""
-#         for i in 0 .. (Array2D.length1 grid) - 1 do
-#             printf "%2i " i
-#             for j in 0 .. (Array2D.length2 grid) - 1 do
-#                 let s = Array2D.get grid j i
-#                 if s.Tile <> null then
-#                     let tile = s.Tile :?> Tile
-#                     printf " %c " tile.Letter
-#                 else
-#                     printf " _ "
-#             printfn ""
+    def put(self, tile, coord):
+        square = self.get(coord)
+        if square:
+            square.tile = tile
+
+    def put(self, move):
+        for c, t in move.letters.items():
+            self.put(t, c)
+
+    def occupied_squares(self):
+        res = {}
+
+        for i in range(0, len(self.grid[0])):
+            for j in range(0, len(self.grid)):
+                s = self.grid[i][j]
+                if s.tile:
+                    res[Coordinate(i, j)] = s
+
+        return res
+
+    def has_neighbouring_tile(self, coord):
+        return any([ self.has_tile(n) for n in coord.neighbors() ])
+
+    def pretty_print(self):
+        print "   "
+        for j in range(0, len(self.grid)):
+            printf "%2i " % j
+        print ""
+
+        for i in range(0, len(self.grid[0])):
+            printf "%2i " % i
+            for j in range(0, len(self.grid)):
+                s = self.grid[j][i]
+                if s.tile:
+                    tile = s.tile
+                    printf " %s " % tile.letter
+                else:
+                    print " _ "
+            print ""
 
 class GameState(object):
     def __init__(self, players):
@@ -347,264 +354,292 @@ class GameState(object):
         self.board = Board()
         self.move_count = 0
         # self.rng = random()
-        self.current_player = 0
+        self.current_player_index = 0
         self.pass_count = 0
         self.word_lookup = WordLookup()
 
-        def __is_game_complete(self):
-            return any([not p.has_tiles for p in self.players])
-                or (self.pass_count == len(self.players)*2)
-                or ((not self.bag) and self.pass_count == len(self.players))
+    def is_game_complete(self):
+        return any([not p.has_tiles for p in self.players])
+            or (self.pass_count == len(self.players)*2)
+            or ((not self.bag) and self.pass_count == len(self.players))
 
-        def finalize_scores(self):
-            for player in self.players:
-                player.finalize_score()
+    def finalize_scores(self):
+        for player in self.players:
+            player.finalize_score()
 
-            bonus = sum([ reduce(lambda x, tile: x + tile.score, player.tiles, 0) for player in self.players if player.has_tiles])
+        bonus = sum([ reduce(lambda x, tile: x + tile.score, player.tiles, 0) for player in self.players if player.has_tiles])
 
-            for player in self.players:
-                if not player.has_tiles:
-                    player.add_score(bonus)
+        for player in self.players:
+            if not player.has_tiles:
+                player.add_score(bonus)
 
-        def winning_players(self):
-            max_score_player = max(self.players, key=lambda p: p.score)
-            return [player for player in self.players if player.score == max_score_player.score]
+    def winning_players(self):
+        max_score_player = max(self.players, key=lambda p: p.score)
+        return [player for player in self.players if player.score == max_score_player.score]
 
-        def finish_game(self):
-            self.finalize_scores()
-            o = GameOutcome(self.winning_players())
-            # players |> List.iter (fun p -> p.NotifyGameOver(o))
+    def finish_game(self):
+        self.finalize_scores()
+        o = GameOutcome(self.winning_players())
+        # players |> List.iter (fun p -> p.NotifyGameOver(o))
 
-        class TurnImplementor:
-            def __init__(self, game_state):
-                self.gs = game_state
+    class TurnImplementor:
+        def __init__(self, game_state):
+            self.gs = game_state
 
-            def perform_pass(self):
-                gs.pass_count += 1
+        def perform_pass(self):
+            self.gs.pass_count += 1
 
-            def perform_dump_letters(self, dl):
-                gs.pass_count = 0
-                letters = dl.letters.sort()
-                count = len(letters)
+        def perform_dump_letters(self, dl):
+            self.gs.pass_count = 0
+            letters = dl.letters.sort()
 
-                for l in letters:
-                    gs.current_player().tiles.remove(l)
+            self.gs.current_player().tiles.remove_many(letters)
 
-                gs.bag.put(letters)
-                gs.give_tiles(gs.current_player(), count)
+            self.gs.bag.put(letters)
+            self.gs.give_tiles(self.gs.current_player(), len(letters))
 
-            def perform_move(self, turn):
-                gs.pass_count = 0
-                move = Move(turn.letters)
-                if not move.is_valid():
-                    raise (InvalidMoveException("Move violates position requirements or forms one or more invalid words."))
+        def perform_move(self, turn):
+            self.gs.pass_count = 0
+            move = Move(turn.letters)
+            if not move.is_valid():
+                raise (InvalidMoveException("Move violates position requirements or forms one or more invalid words."))
 
-                gs.board.put(move)
-                gs.current_player().add_score(move.score)
-                for _, l in turn.letters:
-                    gs.current_player().tiles.remove(l)
+            self.gs.board.put(move)
+            self.gs.current_player().add_score(move.score)
+            self.gs.current_player().tiles.remove_many([l for _, l in turn.letters])
+            self.give_tiles(self.gs.current_player(), len(turn.letters))
 
+        def take_turn(self, turn):
+            turn.perform(self)
+            for player in self.gs.other_players():
+                player.draw_turn(turn, self.gs.current_player())
 
+            if not self.gs.is_game_complete():
+                if self.gs.is_opening_move() and not (type(turn) == PlaceMove):
+                    self.gs.move_count -= 1
 
+                self.gs.next_move()
+            else:
+                self.gs.finish_game()
 
-# and GameState(players:Player list) = 
+    @property
+    def tile_bag(self):
+        return self.bag
 
-#     //Interface implementation
-#     interface ITurnImplementor with
-#         member this.PerformPass() = 
-#             passCount <- passCount + 1
-#         member this.PerformDumpLetters(dl) =
-#             passCount <- 0
-#             let letters = dl.Letters.OrderBy(fun t -> t).ToList()
-#             let count = letters.Count;
-#             this.CurrentPlayer.Tiles.RemoveMany(letters)
-#             bag.Put(letters)
-#             this.GiveTiles(this.CurrentPlayer, letters.Count)
-#         member this.PerformMove(turn) =
-#             passCount <- 0 
-#             let move = Move(turn.Letters)
-#             if not move.IsValid then
-#                 raise (InvalidMoveException("Move violates position requirements or forms one or more invalid words."))
-#             board.Put(move)
-#             this.CurrentPlayer.AddScore(move.Score)
-#             this.CurrentPlayer.Tiles.RemoveMany(turn.Letters |> Seq.map (fun kv -> kv.Value))
-#             this.GiveTiles(this.CurrentPlayer, turn.Letters.Count)
-#         member this.TakeTurn(t:Turn) =
-#             t.Perform(this)
-#             //show this move to the other players
-#             this.OtherPlayers() |> Seq.iter (fun p -> p.DrawTurn(t, this.CurrentPlayer))
-#             if IsGameComplete() = false then
-#                 if this.IsOpeningMove && not(t.GetType().ToString() = "Scrabble.Core.Types.PlaceMove") then
-#                     moveCount <- moveCount - 1
-#                 this.NextMove()
-#             else
-#                 FinishGame()
+    @property
+    def playing_board(self):
+        return self.board
 
-#     //Properties
-#     member this.TileBag with get() = bag
-#     member this.PlayingBoard with get() = board
-#     member this.MoveCount with get() = moveCount and set(x) = moveCount <- x
-#     member this.IsOpeningMove with get() = moveCount = 0
-#     member this.Players with get() =  List.toSeq players
-#     member this.HumanPlayers with get() = this.Players.OfType<HumanPlayer>()
-#     member this.ComputerPlayers with get() = this.Players.OfType<ComputerPlayer>()
-#     member this.Dictionary with get() = wordLookup
-#     member this.CurrentPlayer with get() = List.nth players currentPlayer
+    @property
+    def move_count(self):
+        return self.move_count
 
-#     //Private Members
-#     member private this.NextMove() =
-#         moveCount <- moveCount + 1
-#         //increment player
-#         currentPlayer <- currentPlayer + 1
-#         if currentPlayer >= players.Length then
-#             currentPlayer <- 0
-#         this.CurrentPlayer.NotifyTurn(this)
-#     member private this.OtherPlayers() = 
-#         this.OtherPlayers this.CurrentPlayer
-#     member private this.OtherPlayers(current:Player) = 
-#         players |> List.filter (fun p -> p <> current)
-#     member private this.GiveTiles(p:Player, n:int) = 
-#         if not(bag.IsEmpty) then
-#             let newTiles = bag.Take(n) //if there's less than n tiles in the bag, they get the remaining
-#             p.Tiles.AddRange(newTiles)
-#             p.TilesUpdated()
+    @move_count.setter
+    def move_count(self, count):
+        self.move_count = count
 
-#     //Public Members
-#     member this.Start() = 
-#         //draw tiles for each player
-#         players |> List.iter (fun p -> 
-#             p.Tiles.AddRange(bag.Take ScrabbleConfig.MaxTiles)
-#             p.TilesUpdated()
-#         )
-#         this.CurrentPlayer.NotifyTurn(this)
-# /// A singleton that will represent the game board, bag of tiles, players, move count, etc.
-# and Game() = 
-#     static let mutable instance = Unchecked.defaultof<GameState>
-#     static member Instance with get() = instance and set(x) = instance <- x
+    @property
+    def is_opening_move(self):
+        return self.move_count == 0
 
-# /// A player's move is a set of coordinates and tiles. This will throw if the move isn't valid.
-# /// That is, if the tiles aren't layed out properly (not all connected, the word formed doesn't "touch" any other tiles - with the exception of the first word)
-# /// and if there is a "run" of connected tiles that doesn't form a valid word
-# and Move(letters:Map<Coordinate, Tile>) = 
-#     let sorted = letters |> Seq.sortBy ToKey |> Seq.toList
-#     let first = sorted |> Seq.head |> ToKey
-#     let last = sorted |> Seq.skip (sorted.Length - 1) |> Seq.head |> ToKey
-#     let CheckBoardPrev(c:Coordinate, o:Orientation) = 
-#         let prev = c.Prev(o)
-#         prev.IsValid() && Game.Instance.PlayingBoard.HasTile(prev)
-#     let CheckBoardNext(c:Coordinate, o:Orientation) = 
-#         let next = c.Next(o)
-#         next.IsValid() && Game.Instance.PlayingBoard.HasTile(next)
-#     let range = 
-#         try
-#             Coordinate.Between(first, last)
-#         with 
-#             | UnsupportedCoordinateException(msg) -> raise (InvalidMoveException(msg))
-#     let orientation = 
-#         if letters.Count = 1 then
-#             //need to do some special checking if the player only played a single tile
-#             if CheckBoardNext(first, Orientation.Vertical) || CheckBoardPrev(first, Orientation.Vertical) then
-#                 Orientation.Vertical
-#             else
-#                 Orientation.Horizontal
-#         else if first.X = last.X then
-#             Orientation.Vertical
-#         else
-#             Orientation.Horizontal
+    @property
+    def human_players(self):
+        return [player for player in self.players if type(player) is HumanPlayer]
 
-#     //Private methods
-#     let NotOverwritingTiles() = 
-#         not(letters |> Seq.map (fun kv -> kv.Key) |> Seq.exists (fun key -> Game.Instance.PlayingBoard.HasTile(key)))
-#     let CheckMoveOccupied(c:Coordinate) =
-#             letters.ContainsKey(c) || Game.Instance.PlayingBoard.HasTile(c)
-#     let Opposite(o:Orientation) =
-#         match o with
-#         | Orientation.Horizontal -> Orientation.Vertical
-#         | _ -> Orientation.Horizontal
-#     let IsAligned() = 
-#         if letters.Count <= 1 then
-#             true
-#         else
-#             let c0 = (Seq.head letters) |> ToKey // note: added the helper method "ToKey" to replace this: (fun pair -> pair.Key)
-#             let v = letters |> Seq.map (fun pair -> pair.Key.X) |> Seq.forall (fun x -> c0.X = x)
-#             let h = letters |> Seq.map (fun pair -> pair.Key.Y) |> Seq.forall (fun y -> c0.Y = y)
-#             v || h
-#     let IsConsecutive() =
-#         range |> Seq.forall (fun c -> CheckMoveOccupied(c))
-#     let IsConnected() = 
-#         range |> Seq.exists (fun c -> Game.Instance.PlayingBoard.HasTile(c) || Game.Instance.PlayingBoard.HasNeighboringTile(c))
-#     let ContainsStartSquare() = 
-#         letters.ContainsKey(ScrabbleConfig.StartCoordinate)
-#     let ValidPlacement() = 
-#         NotOverwritingTiles() && IsAligned() && IsConsecutive() && ((Game.Instance.IsOpeningMove && ContainsStartSquare()) || (not Game.Instance.IsOpeningMove && IsConnected()))
-#     let ComputeRuns() : Run list = 
-#         let alt = Opposite(orientation)
-#         let alternateRuns = sorted |> Seq.map (fun pair -> Run(pair.Key, alt, letters)) |> Seq.filter (fun r -> r.Length > 1) |> Seq.toList
-#         Run(first, orientation, letters) :: alternateRuns
-#     let ValidRuns(runs: Run list) = 
-#         runs |> Seq.forall (fun r -> r.IsValid())
-#     let ComputeScore(runs : Run list) =
-#         let score = runs |> List.sumBy (fun r -> r.Score())
-#         if letters.Count = ScrabbleConfig.MaxTiles then
-#             score + ScrabbleConfig.AllTilesBonus
-#         else
-#             score
-#     let score = 
-#         if ValidPlacement() then
-#             //make sure every sequence of tiles with length > 1 formed by this move is a valid word
-#             let runs = ComputeRuns()
-#             if ValidRuns(runs) then
-#                 ComputeScore(runs)
-#             else
-#                 -1 //raise (InvalidMoveException("One or more invalid words were formed by this move."))
-#         else
-#             -1 //raise (InvalidMoveException("Move violates positioning rules (i.e. not connected to other tiles)."))
-    
-#     let valid = score >= 0
+    @property
+    def computer_players(self):
+        return [player for player in self.players if type(player) is ComputerPlayer]
 
-#     member this.Orientation with get() = orientation
-#     member this.Letters with get() = letters
-#     member this.Score with get() = score
-#     member this.IsValid with get() = valid
-#     override this.ToString() = 
-#         let formatter(kv:KeyValuePair<Coordinate, Tile>) = 
-#             String.Format("{2} : ({0}, {1})\n", kv.Key.X, kv.Key.Y, kv.Value.Letter)
-#         if this.Letters.Count > 1 then
-#             letters |> Seq.map formatter |> Seq.reduce (fun a b -> a + b)
-#         else
-#             formatter (letters |> Seq.head)
+    @property
+    def dictionary(self):
+        return self.word_lookup
 
-# /// A Run is a series of connected letters in a given direction. This type takes a location and direction and constructs a map of connected tiles to letters in the given direction.
-# and Run(c:Coordinate, o:Orientation, moveLetters:Map<Coordinate, Tile>) = 
-#     let GetTileFromMove(c:Coordinate) = 
-#         match moveLetters.TryFind c with
-#         | Some t -> t :> obj
-#         | None -> Game.Instance.PlayingBoard.Get(c).Tile
-#     let rec Check(c:Coordinate, o:Orientation, increment) =
-#         if not (c.IsValid()) then
-#             []
-#         else 
-#             let s = Game.Instance.PlayingBoard.Get(c)
-#             let t = GetTileFromMove(c)
-#             if t <> null then
-#                 let next = increment(c, o)
-#                 (s, t) :: Check(next, o, increment)
-#             else
-#                 []
-            
-#     let prevSquares = Check(c, o, (fun (c:Coordinate, o:Orientation) -> c.Prev(o)))
-#     let nextSquares = Check(c.Next(o), o, (fun (c:Coordinate, o:Orientation) -> c.Next(o)))
-#     let squares = (List.rev prevSquares) @ nextSquares 
+    @property
+    def current_player(self):
+        return self.players[self.current_player_index]
 
-#     member this.Orientation with get() = o
-#     member this.Squares with get() = squares
-#     member this.Length with get() = squares.Length
-#     member this.ToWord() =
-#         squares |> List.map (fun (s, t) -> t :?> Tile) |> List.map (fun t -> t.Letter.ToString()) |> List.reduce (fun s0 s1 -> s0 + s1)
-#     member this.IsValid() = 
-#         Game.Instance.Dictionary.IsValidWord(this.ToWord())
-#     member this.Score() =
-#         let wordMult = squares |> List.map (fun (s, t) -> s.WordMultiplier) |> List.reduce (fun a b -> a * b)
-#         let letterScore = squares |> List.map (fun (s, t) -> (s, t :?> Tile)) |> List.map (fun (s, t) ->  s.LetterMultiplier * t.Score ) |> List.sum
-#         wordMult * letterScore
+    def next_move(self):
+        self.move_count += 1
+        self.current_player_index += 1
+        if self.current_player_index >= len(self.playersobject):
+            self.current_player_index = 0
 
+        self.current_player().notify_turn(self)
+
+    def other_players(self):
+        return [self.players[i] for i in len(self.players) if i != self.current_player_index]
+
+    def give_tiles(player, n):
+        if self.bag:
+            new_tiles = self.bag.take(n)
+            player.tiles.extend(new_tiles)
+            player.tiles_updated()
+
+    def start(self):
+        for player in self.players:
+            player.tiles.extend(self.bag.take ScrabbleConfig.max_tiles)
+            player.tiles_updated()
+
+        self.current_player().notify_turn(self)
+
+"""Singleton representing the game board, bag of tiles, players, move count, etc."""
+class Game(object):
+    instance = None # should be the GameState
+
+"""
+    A player's move is a set of coordinates and tiles. This will throw if the move isn't valid.
+    That is, if the tiles aren't layed out properly (not all connected, the word formed doesn't "touch" any other tiles - with the exception of the first word)
+    and if there is a "run" of connected tiles that doesn't form a valid word
+"""
+class Move(object):
+    def __init__(self, letters):
+        self.letters = letters # [<coord, tile>, ...]
+
+        self.sorted = [(c, t) for c, t in self.letters.items()].sort(key=c)
+        self.first = self.sorted[0][0]
+        self.last = self.sorted[-1][0]
+
+    def check_board_prev(self, coord, orientation):
+        prev = coord.prev(orientation)
+        return prev.is_valid() and Game.instance.playing_board().has_tile(prev)
+
+    def check_board_next(self, coord, orientation):
+        next = coord.next(orientation)
+        return next.is_valid() and Game.instance.playing_board().has_tile(next)
+
+    def range(self):
+        try:
+            Coordinate.between(self.first, self.last)
+        except UnsupportedCoordinateException as e:
+            raise InvalidMoveException(e.strerror)
+
+    def orientation(self):
+        if len(self.letters.items()) == 1:
+            if self.check_board_next(self.first, Orientation.vertical) or self.check_board_prev(self.first, Orientation.vertical):
+                return Orientation.vertical
+            else:
+                return Orientation.horizontal
+        elif self.first.x == self.last.x:
+            return Orientation.vertical
+        else:
+            return Orientation.horizontal
+
+    def not_overwriting_tiles(self):
+        not any([Game.instance.has_tile(coord) for coord, _ in self.letters.items()])
+
+    def check_move_occupied(self, coord):
+        return (coord in self.letters.keys()) or Game.instance.has_tile(coord)
+
+    def opposite(self, orientation):
+        return (orientation + 1) % 1
+
+    def is_aligned(self):
+        if len(self.letters) <= 1:
+            return True
+        else:
+            c0 = self.letters.keys()[0]
+            v = all([c0.x == c.x for c, t in self.letters.items()])
+            h = all([c0.y == c.y for c, t in self.letters.items()])
+            return (v or h)
+
+    def is_consecutive(self):
+        return all([ self.check_move_occupied(c) for c in self.range() ])
+
+    def is_connected(self):
+        return any([ Game.instance.has_tile(c) or Game.instance.playing_board.has_neighbouring_tile(c) for c in self.range() ])
+
+    def contains_start_square(self):
+        return ScrabbleConfig.start_coordinate in self.letters.keys()
+
+    def valid_placement(self):
+        return self.not_overwriting_tiles() and self.is_aligned() and self.is_consecutive()
+            and (Game.instance.is_opening_move() and self.contains_start_square())
+            or (not Game.instance.is_opening_move() and self.is_connected())
+
+    def compute_runs(self):
+        alt = self.opposite(self.orientation())
+        alternate_runs = [Run(c, alt, self.letters) for c, _ in self.sorted]
+        return [Run(self.first, self.orientation(), self.letters)] + alternate_runs
+
+    def valid_runs(self, runs):
+        return all([r.is_valid() for r in runs])
+
+    def compute_score(self, runs):
+        score = reduce(lambda r: r.score, runs)
+
+        if len(self.letters) == ScrabbleConfig.max_tiles:
+            return score + ScrabbleConfig.all_tiles_bonus
+        else:
+            return score
+
+    def score(self):
+        if self.valid_placement():
+            runs = self.compute_runs()
+            if self.valid_runs(runs):
+                return self.compute_score(runs)
+            else:
+                return -1 # raise (InvalidMoveException("One or more invalid words were formed by this move."))
+        else:
+            return -1 # raise (InvalidMoveException("Move violates positioning rules (i.e. not connected to other tiles)."))
+
+    def valid(self):
+        return self.score() >= 0
+
+    @property
+    def is_valid(self):
+        return self.valid()
+
+    def __str__(self):
+        tpl = "%c : (%2i, %2i)\n"
+        if len(self.letters) > 1:
+            return ''.join([tpl % (l[1].letter, l[0].x, l[0].y) for l in self.letters.items()])
+        else:
+            l = self.letters.items()[0]
+            return tpl % (l[1].letter, l[0].x, l[0].y)
+
+class Run(object):
+    def __init__(self, coord, orientation, move_letters):
+        self.coordinate = coord
+        self.orientation = orientation
+        self.move_letters = move_letters
+
+    def get_tile_from_move(self, coord):
+        if coord in self.move_letters.keys():
+            return move_letters[coord]
+        else:
+            return Game.instance.playing_board().get(coord).tile
+
+    def check(self, coord, orientation, increment):
+        if not coord.is_valid():
+            return []
+        else:
+            square = Game.instance.playing_board().get(coord)
+            tile = self.get_tile_from_move(coord)
+            if tile:
+                next = increment(coord, orientation)
+                return [(square, tile)] + self.check(next, orientation, increment)
+            else:
+                return []
+
+    def prev_squares(self):
+        return self.check(self.coordinate, self.orientation, lambda c, o: c.prev(o))
+
+    def next_squares(self):
+        return self.check(self.coordinate, self.orientation, lambda c, o: c.next(o))
+
+    def squares(self):
+        return list(reversed(self.prev_squares())) + self.next_squares()
+
+    def length(self):
+        return len(self.squares())
+
+    def to_word(self):
+        return ''.join([t.letter for t in [t for _, t in self.squares()]])
+
+    def is_valid(self):
+        return Game.instance.dictionary().is_valid_word(self.to_word())
+
+    def score(self):
+        word_mult = reduce(lambda x, y: x*y, [s.word_multiplier for s, _ in self.squares], 1)
+        letter_score = sum([s.letter_multiplier*t.score for s, t in self.squares])
+        return word_mult*letter_score

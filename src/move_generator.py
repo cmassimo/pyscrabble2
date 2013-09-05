@@ -1,3 +1,4 @@
+from types import Game
 from word_lookup import WordLookup
 from coodrdinate import Coordinate
 
@@ -91,7 +92,7 @@ class MoveGenerator(object):
             return Pass()
 
     def think(self, tiles_in_hand, utility_mapper):
-        board = game.instance.playing_board
+        board = Game.instance.playing_board
         if board.occupied_squares():
             return self.calculate_best_move(tiles_in_hand, utility_mapper)
         else:

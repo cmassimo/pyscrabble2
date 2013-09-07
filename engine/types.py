@@ -151,8 +151,9 @@ class PlaceMove(Turn):
 
 
 class Player(object):
-    def __init__(self, name):
+    def __init__(self, name, pid):
         self.name = name
+        self.pid = pid
         self.tiles = TileList()
         self.score = 0
 
@@ -180,116 +181,96 @@ class Player(object):
     def take_turn(implementor, turn):
         implementor.take_turn(turn)
 
+    def is_human(self):
+        return False
+
 class GameOutcome(object):
-    def __init__(self, winners):
+    def __init__(self, winners, all_updated_players):
         self.winners = winners
+        self.all_updated_players = all_updated_players
 
 class ComputerPlayer(Player):
-    def __init__(self, name):
-        super().__init__(self, name)
+    def __init__(self, name, pid):
+        super().__init__(self, name, pid)
+        self.passes = 0
+        # self.window??
+
+    @property
+    def provider(self):
+        return self.provider
+
+    @provider.setter
+    def provider(self, provider):
+        self.provider = provider
+
+    @property
+    def utility_function(self):
+        return self.utility
+
+    @utility.setter
+    def utility_function(self, func):
+        self.utility = func
+
+    def notify_turn(self, implementor):
+        self.invoke_turn(implementor)
+
+    def invoke_turn(self, implementor):
+        turn = self.provider.think(self.tiles, self.utility)
+        if type(turn) == Pass:
+            self.passes += 1
+        else:
+            self.passes = 0
+
+        # auto-dump after 3 passes in a row, unless at the end of the game
+        if self.passes >= 3 and len(self.tiles) ScrabbleConfig.max_tiles:
+            self.passes = 0
+            self.take_turn(implementor, DumpLetters(self.tiles))
+        else:
+            self.take_turn(implementor, turn)
+
+    # TODO window?? o cmq reference al controller?? boooh (cfr. __init__)
+    # @property
+    # def window(self):
+    #     return self.window
+
+    def notify_game_over(self, go):
+        pass
+
+    def draw_turn(self, turn, player, s):
+        pass
+
+    def tiles_updated(self):
+        pass
 
 class HumanPlayer(Player):
     def __init__(self, name):
         super().__init__(self, name)
+        # self.window??
 
+    def notify_turn(self, implementor):
+        self.game = implementor
+        # XXX ancora window! :|
 
-# [<AbstractClass>]
-# type Player(name:string) =
-#     let tiles = TileList()
-#     let mutable score = 0
-#     abstract member NotifyTurn : ITurnImplementor -> unit
-#     abstract member NotifyGameOver : GameOutcome -> unit
-#     abstract member DrawTurn : Turn * Player -> unit
-#     abstract member TilesUpdated : unit -> unit
-#     member this.Name with get() = name
-#     member this.Score with get() = score
-#     member this.Tiles with get() = tiles
-#     member this.HasTiles with get() = tiles.Count > 0
-#     member this.AddScore(s) = 
-#         score <- score + s
-#     member this.FinalizeScore() =
-#         score <- score - this.Tiles.Score()
-#     member this.TakeTurn(implementor:ITurnImplementor, t:Turn) = 
-#         implementor.TakeTurn(t)
+    # TODO window?? o cmq reference al controller?? boooh (cfr. __init__)
+    # @property
+    # def window(self):
+    #     return self.window
 
-# and GameOutcome(winners:seq<Player>) =
-#     member this.Winners with get() = winners
+    def notify_game_over(self, go):
+        pass
 
-# type ComputerPlayer(name:string) = 
-#     inherit Player(name)
+    def draw_turn(self, turn, player, s):
+        pass
 
-#     [<DefaultValue>] val mutable private window : IDispWindow
-#     [<DefaultValue>] val mutable private provider : IIntelligenceProvider
-#     member this.Provider with get() = this.provider and set x = this.provider <- x
-#     [<DefaultValue>] val mutable private utility : TileList * Map<Coordinate, Tile> -> double
-#     member this.UtilityFunction with get() = this.utility and set x = this.utility <- x
+    def tiles_updated(self):
+        pass
 
-#     let mutable passes = 0
+    def take_turn(implementor, turn):
+        super().take_turn(self.game, turn)
 
-#     override this.NotifyTurn(implementor) =
-#         if not(this.window = Unchecked.defaultof<IDispWindow>) then
-#             let win = this.window :?> System.Windows.Threading.DispatcherObject
-#             let f : del1 = new del1( fun () -> this.InvokeTurn(implementor) )
-#             let st = System.Threading.ThreadStart(fun () -> win.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, f) |> ignore)
-#             let t = System.Threading.Thread(st)
-#             t.Start()
-#         else
-#             this.InvokeTurn(implementor)
-#     member this.InvokeTurn(implementor) =
-#         let turn = this.provider.Think(this.Tiles, this.utility)
-#         if turn.GetType().ToString() = "Scrabble.Core.Types.Pass" then
-#             passes <- passes + 1
-#         else
-#             passes <- 0
+    def is_human(self):
+        return True
 
-#         if passes >= 3 && this.Tiles.Count = 7 then //auto-dump after 3 passes in a row, unless at the end of the game
-#             passes <- 0
-#             this.TakeTurn(implementor, DumpLetters(this.Tiles))
-#         else
-#             this.TakeTurn(implementor, turn)
-
-#     member this.Window with get() = this.window and set w = this.window <- w
-
-#     override this.NotifyGameOver(o:GameOutcome) = 
-#         if not(this.window = Unchecked.defaultof<IDispWindow>) then
-#             this.window.GameOver(o)
-#     override this.DrawTurn(t:Turn, p:Player) = 
-#         if not(this.window = Unchecked.defaultof<IDispWindow>) then
-#             this.window.DrawTurn(t, p)
-#     override this.TilesUpdated() = 
-#         if not(this.window = Unchecked.defaultof<IDispWindow>) then
-#             this.window.TilesUpdated()
-# and IDispWindow = 
-#     abstract member NotifyTurn : unit -> unit
-#     abstract member DrawTurn : Turn * Player -> unit
-#     abstract member Player : ComputerPlayer with get, set
-#     abstract member GameOver : GameOutcome -> unit
-#     abstract member TilesUpdated : unit -> unit
-# and del1 = delegate of unit -> unit
-
-# type HumanPlayer(name:string) =
-#     inherit Player(name)
-#     [<DefaultValue>] val mutable private window : IGameWindow
-#     [<DefaultValue>] val mutable private game : ITurnImplementor
-#     override this.NotifyTurn(implementor) = 
-#         this.game <- implementor
-#         this.window.NotifyTurn()
-#     override this.NotifyGameOver(o:GameOutcome) = 
-#         this.window.GameOver(o)
-#     override this.DrawTurn(t:Turn, p:Player) = 
-#         this.window.DrawTurn(t, p)
-#     override this.TilesUpdated() = 
-#         this.window.TilesUpdated()
-#     member this.Window with get() = this.window and set w = this.window <- w
-#     member this.TakeTurn(t:Turn) = 
-#         base.TakeTurn(this.game, t)
-
-# and IGameWindow =
-#     abstract member NotifyTurn : unit -> unit
-#     abstract member DrawTurn : Turn * Player -> unit
-#     abstract member Player : HumanPlayer with get, set
-#     abstract member GameOver : GameOutcome -> unit
-#     abstract member TilesUpdated : unit -> unit
 
 class Board(object):
     def __init__(self):
@@ -349,19 +330,19 @@ class Board(object):
             print ""
 
 class GameState(object):
-    def __init__(self, players):
+    def __init__(self, word_lookup, players):
         self.players = players
         self.bag = Bag()
         self.board = Board()
         self.move_count = 0
-        # self.rng = random()
+        self.running = False
         self.current_player_index = 0
         self.pass_count = 0
-        self.word_lookup = WordLookup()
+        self.word_lookup = word_lookup
 
     def is_game_complete(self):
         return any([not p.has_tiles for p in self.players])
-            or (self.pass_count == len(self.players)*2)
+            or (self.pass_count == len(self.players)*2) 
             or ((not self.bag) and self.pass_count == len(self.players))
 
     def finalize_scores(self):
@@ -380,8 +361,9 @@ class GameState(object):
 
     def finish_game(self):
         self.finalize_scores()
-        o = GameOutcome(self.winning_players())
-        # players |> List.iter (fun p -> p.NotifyGameOver(o))
+        go = GameOutcome(self.winning_players(), self.players)
+        for p in self.players:
+            p.notify_game_over(go)
 
     class TurnImplementor:
         def __init__(self, game_state):
@@ -389,6 +371,7 @@ class GameState(object):
 
         def perform_pass(self):
             self.gs.pass_count += 1
+            return self.gs.current_player().name + " has passed.";
 
         def perform_dump_letters(self, dl):
             self.gs.pass_count = 0
@@ -398,6 +381,8 @@ class GameState(object):
 
             self.gs.bag.put(letters)
             self.gs.give_tiles(self.gs.current_player(), len(letters))
+
+            return self.gs.current_player().name + " exchanged letters.";
 
         def perform_move(self, turn):
             self.gs.pass_count = 0
@@ -410,10 +395,14 @@ class GameState(object):
             self.gs.current_player().tiles.remove_many([l for _, l in turn.letters])
             self.give_tiles(self.gs.current_player(), len(turn.letters))
 
+            return self.gs.current_player().name + " scored " + str(move.scoreobj) + " points ";
+
         def take_turn(self, turn):
-            turn.perform(self)
+            summary = turn.perform(self)
+            self.gs.current_player().draw_turn(turn, self.gs.current_player(), summary)
+
             for player in self.gs.other_players():
-                player.draw_turn(turn, self.gs.current_player())
+                player.draw_turn(turn, self.gs.current_player(), summary)
 
             if not self.gs.is_game_complete():
                 if self.gs.is_opening_move() and not (type(turn) == PlaceMove):
@@ -474,18 +463,31 @@ class GameState(object):
         if self.bag:
             new_tiles = self.bag.take(n)
             player.tiles.extend(new_tiles)
-            player.tiles_updated()
+        player.tiles_updated()
 
     def start(self):
+        self.running = True
+
         for player in self.players:
             player.tiles.extend(self.bag.take ScrabbleConfig.max_tiles)
             player.tiles_updated()
 
         self.current_player().notify_turn(self)
 
+    def continue(self):
+        if not self.running:
+            self.start()
+        elif self.current_player().is_human:
+            self.current_player().notify_turn(self)
+
 """Singleton representing the game board, bag of tiles, players, move count, etc."""
 class Game(object):
-    instance = None # should be the GameState
+    loader = None # should be the GameState
+
+    @classmethod
+    def instance(cls):
+        cls.loader.load()
+
 
 """
     A player's move is a set of coordinates and tiles. This will throw if the move isn't valid.

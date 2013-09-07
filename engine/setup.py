@@ -8,55 +8,28 @@ def setup_game_state():
         ComputerPlayer('QWE')
         ])
 
-def setup_computer():
-    for player in Game.instance.computer_players:
-        player.provider = MoveGenerator(Game.instance.Dictionary)
-        player.utility_function = maximum_score
+def apply_setup_values(word_lookup, player, provider_code, utility_code):
+  if provider_code == 0:
+    player.provider = MoveGenerator(word_lookup)
+  elif provider_code == 1:
+    player.provider = HillClimbingMoveGenerator(word_lookup, 15)
+  elif provider_code == 2:
+    player.provider = HillClimbingMoveGenerator(word_lookup, 5)
+  else:
+    raise Exception("Unknown utility function code.")
 
+  if utility_code == 0:
+    player.utility_function = MaximumScore
+  elif utility_code == 1:
+    player.utility_function = SmartSMoves
+  elif utility_code == 2:
+    player.utility_function = SaveCommon
+  elif utility_code == 3:
+    player.utility_function = OnlyPlay7s
+  elif utility_code == 4:
+    player.utility_function = OnlyPlayOver5
+  elif utility_code == 5:
+    player.utility_function = UseBonusSquares
+  else:
+    raise Exception("Unknown utility function code.")
 
-# let SetupGameState() = 
-#     Game.Instance <- GameState([ 
-#                                 ComputerPlayer("PlayerOne") :> Player 
-#                                 ;ComputerPlayer("PlayerTwo") :> Player
-#                                 ;ComputerPlayer("PlayerThree") :> Player 
-#                                ])
-
-
-# let SetupComputer() = 
-#     Game.Instance.ComputerPlayers |> Seq.iter (fun c -> 
-#         c.Provider <- //HillClimbingMoveGenerator(Game.Instance.Dictionary, 5) //random restart 5 times
-#                         HillClimbingMoveGenerator(Game.Instance.Dictionary) 
-#                         //MoveGenerator(Game.Instance.Dictionary)
-#         c.UtilityFunction <- MaximumScore
-#                             //SmartSMoves
-#                             //SaveCommon
-#                             //OnlyPlay7s
-#                             //OnlyPlayOver5
-#                             //UseBonusSquares
-#     )
-
-# let SetupFirstComputer() = 
-#     let first = Game.Instance.ComputerPlayers |> Seq.head
-    
-#     first.Provider <- //HillClimbingMoveGenerator(Game.Instance.Dictionary, 5) //random restart 5 times
-#                         HillClimbingMoveGenerator(Game.Instance.Dictionary) 
-#                         //MoveGenerator(Game.Instance.Dictionary)
-#     first.UtilityFunction <- MaximumScore
-#                             //SmartSMoves
-#                             //SaveCommon
-#                             //OnlyPlay7s
-#                             //OnlyPlayOver5
-#                             //UseBonusSquares
-
-# let SetupSecondComputer() = 
-#     let second = Game.Instance.ComputerPlayers |> Seq.toList |> List.tail |> List.head
-    
-#     second.Provider <- //HillClimbingMoveGenerator(Game.Instance.Dictionary, 15) //random restart 5 times
-#                         HillClimbingMoveGenerator(Game.Instance.Dictionary) 
-#                         //MoveGenerator(Game.Instance.Dictionary)
-#     second.UtilityFunction <- MaximumScore
-#                             //SmartSMoves
-#                             //SaveCommon
-#                             //OnlyPlay7s
-#                             //OnlyPlayOver5
-#                             //UseBonusSquares

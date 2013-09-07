@@ -1,8 +1,8 @@
 ﻿class Square(object):
-    def __init__(self, letter_mult, word_mult, gradient):
+    def __init__(self, letter_mult, word_mult, css_class):
         self.letter_multiplier = letter_mult
         self.word_multiplier = word_mult
-        self.gradient = gradient
+        self.css_class = css_class
         self.tile = None
 
     @property
@@ -37,25 +37,24 @@
 
 class NormalSquare(Square):
     def __init__(self):
-        super().__init__(self, 1, 1, "FFFFFFFF")
+        super().__init__(self, 1, 1, "")
 
 class DoubleLetterSquare(Square):
     def __init__(self):
-        super().__init__(self, 2, 1, "FF9696FF")
+        super().__init__(self, 2, 1, "doubleLetter")
 
 class TripleLetterSquare(Square):
     def __init__(self):
-        super().__init__(self, 3, 1, "FF0000FE")
+        super().__init__(self, 3, 1, "tripleLetter")
 
 class DoubleWordSquare(Square):
     def __init__(self):
-        super().__init__(self, 1, 2, "FFFF3C3C")
+        super().__init__(self, 1, 2, "doubleWord")
 
 class TripleWordSquare(Square):
     def __init__(self):
-        super().__init__(self, 1, 3, "FFFF0000")
+        super().__init__(self, 1, 3, "tripleWord")
 
-class StartSquare(DoubleWordSquare):
-    # def __init__(self):
-    #     super().__init__(self)
-    pass
+class StartSquare(Square):
+    def __init__(self):
+        super().__init__(self, 1, 2, "start")

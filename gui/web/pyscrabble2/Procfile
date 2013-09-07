@@ -1,0 +1,1 @@
+web: gunicorn pyscrabble2.wsgi

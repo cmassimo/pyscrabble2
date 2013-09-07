@@ -1,5 +1,6 @@
 from random import shuffle, random
 
+from exceptions import *
 from config import ScrabbleConfig
 from word_lookup import WordLookup
 
@@ -35,7 +36,7 @@ class Tile(object):
         print "Letter: %c, Score: %i" % (self.letter, self.score)
 
     def __eq__(self, other):
-        self.letter == other.letter
+        return self.letter == other.letter
 
     # TODO
     def __cmp__(self, other):
@@ -511,7 +512,7 @@ class Move(object):
         try:
             Coordinate.between(self.first, self.last)
         except UnsupportedCoordinateException as e:
-            raise InvalidMoveException(e.strerror)
+            raise InvalidMoveException(e.args[0])
 
     def orientation(self):
         if len(self.letters.items()) == 1:

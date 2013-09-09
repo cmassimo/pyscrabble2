@@ -1,6 +1,6 @@
-from types import Game
+from types import *
 from word_lookup import WordLookup
-from coodrdinate import Coordinate
+from config import Coordinate
 
 class MoveGenerator(object):
     def __init__(self):
@@ -46,7 +46,7 @@ class MoveGenerator(object):
         unchecked_starts = []
         for i in range(0, len(word)):
             if word.upper()[i] == letter:
-                if o = Orientation.horizontal:
+                if o == Orientation.horizontal:
                     if (c.x - i) >= 0 and (c.x + len(word) - i) <= 14:
                         unchecked_starts.append( Coordinate(c.x - i, c.y) )
                 else:
@@ -64,7 +64,7 @@ class MoveGenerator(object):
 
             if letter_pos:
                 move = Move(dict(letter_pos))
-                if move.is_valid
+                if move.is_valid:
                     vmoves.append(move)
 
         return vmoves

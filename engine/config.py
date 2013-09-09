@@ -1,6 +1,13 @@
 ﻿from exceptions import *
+from pusher import Pusher
 
 WORDLIST_PATH = "../twl.txt"
+
+the_pusher = Pusher(
+  app_id='53591',
+  key='a0a56b5e372395197020',
+  secret='0f0db5e609af25a002c3'
+)
 
 class Orientation(object):
     vertical = 0
@@ -18,8 +25,8 @@ class Coordinate(object):
         self.x = x
         self.y = y
 
-    def print(self):
-        printf "(%2i, %2i)" % (self.x, self.y)
+    def __str__(self):
+        return "(%2i, %2i)" % (self.x, self.y)
 
     def neighbors(self):
         nb = []
@@ -58,7 +65,7 @@ class Coordinate(object):
 
         if first.x == last.x:
             return [Coordinate(first.x, y) for y in range(first.y, last.y+1)]
-        elif:
+        elif first.y == last.y:
             return [Coordinate(x, first.y) for x in range(first.x, last.x+1)]
         else:
             raise UnsupportedCoordinateException("Coordinates are not on the same axis.")

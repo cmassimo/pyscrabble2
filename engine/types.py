@@ -1,7 +1,7 @@
 from random import shuffle, random
 
 from exceptions import *
-from config import ScrabbleConfig
+from config import ScrabbleConfig, the_pusher
 from word_lookup import WordLookup
 
 class Tile(object):
@@ -32,8 +32,8 @@ class Tile(object):
         self.letter = letter
         self.score = Tile.__get_core(letter)
 
-    def print(self):
-        print "Letter: %c, Score: %i" % (self.letter, self.score)
+    def __str__(self):
+        return "Letter: %c, Score: %i" % (self.letter, self.score)
 
     def __eq__(self, other):
         return self.letter == other.letter
@@ -98,11 +98,11 @@ class TileList(list):
             return False
 
 class Bag(object):
-    def __init__(self)
+    def __init__(self):
         self.pointer = 0
         self.inventory = []
 
-        for k, v ScrabbleConfig.letter_quantity.items():
+        for k, v in ScrabbleConfig.letter_quantity.items():
             for _ in range(0, v):
                 self.inventory.append(Tile(k))
 
@@ -111,9 +111,8 @@ class Bag(object):
     def is_empty(self):
         return len(inventory.keys()) == 0
 
-    def print(self):
-        for tile in inventory.values()
-            tile.print()
+    def __str__(self):
+        return "\n".join([tile.__str__() for tile in inventory.values()])
 
     def take(self, n =1):
         if self.inventory:
@@ -193,7 +192,7 @@ class ComputerPlayer(Player):
     def __init__(self, name, pid):
         super().__init__(self, name, pid)
         self.passes = 0
-        # self.window??
+        self.channel = 'computer_' + str(self.pid)
 
     @property
     def provider(self):
@@ -222,48 +221,38 @@ class ComputerPlayer(Player):
             self.passes = 0
 
         # auto-dump after 3 passes in a row, unless at the end of the game
-        if self.passes >= 3 and len(self.tiles) ScrabbleConfig.max_tiles:
+        if self.passes >= 3 and len(self.tiles) == ScrabbleConfig.max_tiles:
             self.passes = 0
             self.take_turn(implementor, DumpLetters(self.tiles))
         else:
             self.take_turn(implementor, turn)
 
-    # TODO window?? o cmq reference al controller?? boooh (cfr. __init__)
-    # @property
-    # def window(self):
-    #     return self.window
-
     def notify_game_over(self, go):
-        pass
+        the_pusher[self.channel].trigger('game_over', {'game_outcome': go})
 
     def draw_turn(self, turn, player, s):
-        pass
+        the_pusher[self.channel].trigger('draw_turn', {'turn': turn, 'player': player, 'string': s})
 
     def tiles_updated(self):
-        pass
+        the_pusher[self.channel].trigger('tiles_updated')
 
 class HumanPlayer(Player):
     def __init__(self, name):
         super().__init__(self, name)
-        # self.window??
+        self.channel = 'human'
 
     def notify_turn(self, implementor):
         self.game = implementor
-        # XXX ancora window! :|
-
-    # TODO window?? o cmq reference al controller?? boooh (cfr. __init__)
-    # @property
-    # def window(self):
-    #     return self.window
+        the_pusher[self.channel].trigger('notify_turn')
 
     def notify_game_over(self, go):
-        pass
+        the_pusher[self.channel].trigger('game_over', {'game_outcome': go})
 
     def draw_turn(self, turn, player, s):
-        pass
+        the_pusher[self.channel].trigger('draw_turn', {'turn': turn, 'player': player, 'string': s})
 
     def tiles_updated(self):
-        pass
+        the_pusher[self.channel].trigger('tiles_updated')
 
     def take_turn(implementor, turn):
         super().take_turn(self.game, turn)
@@ -315,16 +304,16 @@ class Board(object):
     def pretty_print(self):
         print "   "
         for j in range(0, len(self.grid)):
-            printf "%2i " % j
+            print "%2i " % j
         print ""
 
         for i in range(0, len(self.grid[0])):
-            printf "%2i " % i
+            print "%2i " % i
             for j in range(0, len(self.grid)):
                 s = self.grid[j][i]
                 if s.tile:
                     tile = s.tile
-                    printf " %s " % tile.letter
+                    print " %s " % tile.letter
                 else:
                     print " _ "
             print ""
@@ -341,9 +330,9 @@ class GameState(object):
         self.word_lookup = word_lookup
 
     def is_game_complete(self):
-        return any([not p.has_tiles for p in self.players])
-            or (self.pass_count == len(self.players)*2) 
-            or ((not self.bag) and self.pass_count == len(self.players))
+        return (any([not p.has_tiles for p in self.players]) or
+            (self.pass_count == len(self.players)*2)  or
+            ((not self.bag) and self.pass_count == len(self.players)))
 
     def finalize_scores(self):
         for player in self.players:
@@ -469,12 +458,12 @@ class GameState(object):
         self.running = True
 
         for player in self.players:
-            player.tiles.extend(self.bag.take ScrabbleConfig.max_tiles)
+            player.tiles.extend(self.bag.take, ScrabbleConfig.max_tiles)
             player.tiles_updated()
 
         self.current_player().notify_turn(self)
 
-    def continue(self):
+    def continue_game(self):
         if not self.running:
             self.start()
         elif self.current_player().is_human:
@@ -482,11 +471,12 @@ class GameState(object):
 
 """Singleton representing the game board, bag of tiles, players, move count, etc."""
 class Game(object):
-    loader = None # should be the GameState
+    # loader = None # should be the GameState
+    instance = None
 
-    @classmethod
-    def instance(cls):
-        cls.loader.load()
+    # @classmethod
+    # def instance(cls):
+    #     cls.loader.load()
 
 
 """
@@ -555,9 +545,9 @@ class Move(object):
         return ScrabbleConfig.start_coordinate in self.letters.keys()
 
     def valid_placement(self):
-        return self.not_overwriting_tiles() and self.is_aligned() and self.is_consecutive()
-            and (Game.instance.is_opening_move() and self.contains_start_square())
-            or (not Game.instance.is_opening_move() and self.is_connected())
+        return (self.not_overwriting_tiles() and self.is_aligned() and self.is_consecutive() and
+            (Game.instance.is_opening_move() and self.contains_start_square()) or
+            (not Game.instance.is_opening_move() and self.is_connected()))
 
     def compute_runs(self):
         alt = self.opposite(self.orientation())

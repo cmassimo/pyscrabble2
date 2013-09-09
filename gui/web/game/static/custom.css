@@ -1,0 +1,23 @@
+body {
+  padding-top: 50px;
+}
+.starter-template {
+  padding: 40px 15px;
+  text-align: center;
+}
+
+#board { border: 1px solid #000; }
+#board td, .tile, .heightFix { width: 32px; height: 32px; }
+#board td { border: 1px solid #ccc; padding: 0; }
+#board td.highlight { border: 1px solid #f00; }
+#board .doubleLetter { background-color: #9696ff; }
+#board .tripleLeter { background-color: #0000fe; }
+#board .doubleWord { background-color: #ff9999; }
+#board .tripleWord { background-color: #f00; }
+#playingArea #board td.tile-over { background-color: #ffd800; }
+#board .start { background-color: #ff3c3c; }
+.rack { width: 252px; height: 36px; }
+.tile { color: #333; background-color: #eee; text-align: center; position: absolute!important; font-weight: bold; font-size: 1.4em; line-height: 32px; user-select: none; float: left; }
+.tile.movable { cursor: pointer; }
+.tile .tileScore { position: absolute; right: 2px; bottom: 2px; font-size: 0.6em; line-height: 1em; }
+#board td .tile { position: relative!important; left: 0px!important; top: 0px!important; }

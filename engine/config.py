@@ -1,12 +1,16 @@
 ﻿from exceptions import *
+import os
+
 from pusher import Pusher
 
-WORDLIST_PATH = "../twl.txt"
+from squares import *
+
+WORDLIST_PATH = os.path.dirname(os.path.abspath(__file__)) + "/../twl.txt"
 
 the_pusher = Pusher(
-  app_id='53591',
-  key='a0a56b5e372395197020',
-  secret='0f0db5e609af25a002c3'
+    app_id='53591',
+    key='a0a56b5e372395197020',
+    secret='0f0db5e609af25a002c3'
 )
 
 class Orientation(object):
@@ -28,6 +32,8 @@ class Coordinate(object):
     def __str__(self):
         return "(%2i, %2i)" % (self.x, self.y)
 
+    __repr__ = __str__
+
     def neighbors(self):
         nb = []
         if self.valid_xy(self.x - 1):
@@ -44,10 +50,7 @@ class Coordinate(object):
     def is_valid(self):
         return self.valid_xy(self.x) and self.valid_xy(self.y)
 
-    def next(self, orientation):
-        return self.next(orientation, 1)
-
-    def next(self, orientation, offset):
+    def next(self, orientation, offset =1):
         if orientation == Orientation.horizontal:
             return Coordinate(self.x + offset, self.y)
         else:
@@ -70,35 +73,23 @@ class Coordinate(object):
         else:
             raise UnsupportedCoordinateException("Coordinates are not on the same axis.")
 
+    @staticmethod
     def valid_xy(i):
         return i >= 0 and i < ScrabbleConfig.board_length
 
     def __eq__(self, other):
         return self.x == other.x and self.y == other.y
 
-    # TODO
     def __cmp__(self, other):
-        pass
-        
-    # TODO
-    def __hash__(self, other):
-        pass
+        cmp_x = self.x.__cmp__(other.x)
+        if cmp_x:
+            return self.y.__cmp__(other.y)
+        else:
+            return cmp_x
 
-    # //IComparable interface
-    # interface IComparable with  
-    #      member this.CompareTo(o) = 
-    #         let other = o :?> Coordinate
-    #         let compareX = this.X.CompareTo(other.X)
-    #         if compareX = 0 then
-    #             this.Y.CompareTo(other.Y)
-    #         else
-    #             compareX
-    # override this.GetHashCode() =
-    #     this.X.GetHashCode() + this.Y.GetHashCode()
-    # override this.Equals(o) =
-    #     match o with
-    #     | :? Coordinate as other -> this.X = other.X && this.Y = other.Y
-    #     | _ -> false
+    def __hash__(self):
+        return self.x.__hash__() + self.y.__hash__()
+        # return int(str(self.x) + str(self.y))
 
 class ScrabbleConfig(object):
     letter_quantity = {'A': 9, 'C': 2, 'B': 2, 'E': 12, 'D': 4, 'G': 3, 'F': 2, 'I': 9, 'H': 2, 'K': 1, 'J': 1, 'M': 2, 'L': 4, 'O': 8, 'N': 6, 'Q': 1, 'P': 2, 'S': 4, 'R': 6, 'U': 4, 'T': 6, 'W': 2, 'V': 2, 'Y': 2, 'X': 1, 'Z': 1}

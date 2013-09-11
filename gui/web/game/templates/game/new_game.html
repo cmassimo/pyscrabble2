@@ -1,0 +1,9 @@
+<tbody>
+  {% for row in board %}
+    <tr>
+      {% for val in row %}
+        <td class="{{ val.css_class }}"><div class="heightFix"></div></td>
+      {% endfor %}
+    </tr>
+  {% endfor %}
+</tbody>

@@ -1,12 +1,24 @@
 from random import shuffle, random
+import json
 
 from exceptions import *
-from config import ScrabbleConfig, the_pusher
+from config import ScrabbleConfig, Coordinate, Orientation, the_pusher
 from word_lookup import WordLookup
+
+class ObjEncoder(json.JSONEncoder):
+    def default(self, obj):
+        std = [dict, list, tuple, str, unicode, int, long, float, True, False, None]
+
+        if type(obj) in std :
+            return super(ObjEncoder, self).default(obj)
+
+        res = obj.__dict__
+        res.setdefault('type', type(obj).__name__)
+        return res
 
 class Tile(object):
     @classmethod
-    def __get_score(letter):
+    def __get_score(cls, letter):
         l = letter.upper()
         
         if l in ['E', 'A', 'I', 'O', 'N', 'R', 'T', 'L', 'S', 'U']:
@@ -30,22 +42,26 @@ class Tile(object):
 
     def __init__(self, letter):
         self.letter = letter
-        self.score = Tile.__get_core(letter)
+        self.score = Tile.__get_score(letter)
 
     def __str__(self):
         return "Letter: %c, Score: %i" % (self.letter, self.score)
 
+    __repr__ = __str__
+
     def __eq__(self, other):
         return self.letter == other.letter
 
-    # TODO
     def __cmp__(self, other):
-        pass
-        
-    # TODO
-    def __hash__(self, other):
-        pass
+        if self.letter == other.letter:
+            return 0
+        elif self.letter > other.letter:
+            return 1
+        elif self.letter < other.letter:
+            return -1
 
+    def __hash__(self):
+        return self.letter.__hash__()
 
 class TileList(list):
     def __init__(self):
@@ -109,16 +125,16 @@ class Bag(object):
         shuffle(self.inventory)
 
     def is_empty(self):
-        return len(inventory.keys()) == 0
+        return len(self.inventory) == 0
 
     def __str__(self):
-        return "\n".join([tile.__str__() for tile in inventory.values()])
+        return "\n".join([tile.__str__() for tile in self.inventory])
 
     def take(self, n =1):
         if self.inventory:
-            can_take = min(len(inventory.keys()), n)
+            can_take = min(len(self.inventory), n)
 
-            return [self.inventory.pop(i) for i in range(0, n)]
+            return [self.inventory.pop(i) for i in range(0, can_take)]
         else:
             raise (Exception("The bag is empty, you can not take any tiles."))
 
@@ -132,21 +148,21 @@ class Turn(object):
 
 class Pass(Turn):
     def perform(self, implementor):
-        implementor.perform_pass()
+        return implementor.perform_pass()
 
 class DumpLetters(Turn):
     def __init__(self, tiles):
         self.letters = tiles
 
     def perform(self, implementor):
-        implementor.perform_dump_letters()
+        return implementor.perform_dump_letters(self)
 
 class PlaceMove(Turn):
     def __init__(self, letters):
         self.letters = letters
 
     def perform(self, implementor):
-        implementor.perform_move()
+        return implementor.perform_move(self)
 
 
 class Player(object):
@@ -177,36 +193,43 @@ class Player(object):
     def finalize_score(self):
         self.score -= reduce(lambda x, tile: x + tile.score, self.tiles, 0)
 
+    @staticmethod
     def take_turn(implementor, turn):
         implementor.take_turn(turn)
 
     def is_human(self):
         return False
 
+    def summary(self):
+        return {'pid': self.pid, 'name': self.name, 'score': self.score, 'tiles': [{'letter': t.letter, 'score': t.score} for t in self.tiles]}
+
 class GameOutcome(object):
     def __init__(self, winners, all_updated_players):
         self.winners = winners
         self.all_updated_players = all_updated_players
 
+    def summary(self):
+        return {'winners': [w.summary() for w in self.winners], 'all_players': [a.summary() for a in self.all_updated_players]}
+
 class ComputerPlayer(Player):
     def __init__(self, name, pid):
-        super().__init__(self, name, pid)
+        super(ComputerPlayer, self).__init__(name, pid)
         self.passes = 0
         self.channel = 'computer_' + str(self.pid)
 
     @property
     def provider(self):
-        return self.provider
+        return self._provider
 
     @provider.setter
     def provider(self, provider):
-        self.provider = provider
+        self._provider = provider
 
     @property
     def utility_function(self):
         return self.utility
 
-    @utility.setter
+    @utility_function.setter
     def utility_function(self, func):
         self.utility = func
 
@@ -215,30 +238,38 @@ class ComputerPlayer(Player):
 
     def invoke_turn(self, implementor):
         turn = self.provider.think(self.tiles, self.utility)
+
         if type(turn) == Pass:
             self.passes += 1
         else:
             self.passes = 0
 
         # auto-dump after 3 passes in a row, unless at the end of the game
-        if self.passes >= 3 and len(self.tiles) == ScrabbleConfig.max_tiles:
+        if self.passes > 3 and len(self.tiles) == ScrabbleConfig.max_tiles:
             self.passes = 0
             self.take_turn(implementor, DumpLetters(self.tiles))
         else:
             self.take_turn(implementor, turn)
 
     def notify_game_over(self, go):
-        the_pusher[self.channel].trigger('game_over', {'game_outcome': go})
+        data = {'game_outcome': go.summary()}
+        the_pusher[self.channel].trigger('game_over', data)
+        # print "game_over: %s" % go.summary()
 
     def draw_turn(self, turn, player, s):
-        the_pusher[self.channel].trigger('draw_turn', {'turn': turn, 'player': player, 'string': s})
+        data = {'player': player.summary(), 'string': s}
+        if type(turn) == PlaceMove:
+            data['move'] = [{'x': c.x, 'y': c.y, 'tile': {'letter': t.letter, 'score': t.score}} for c, t in turn.letters.items()]
+        the_pusher[self.channel].trigger('draw_turn', data)
+        # print "draw_turn: %s self.passes: %2i" % (s, self.passes)
 
     def tiles_updated(self):
         the_pusher[self.channel].trigger('tiles_updated')
+        # print "tiles_updated: %2i" % self.passes
 
 class HumanPlayer(Player):
     def __init__(self, name):
-        super().__init__(self, name)
+        super(HumanPlayer, self).__init__(name, 0)
         self.channel = 'human'
 
     def notify_turn(self, implementor):
@@ -246,16 +277,18 @@ class HumanPlayer(Player):
         the_pusher[self.channel].trigger('notify_turn')
 
     def notify_game_over(self, go):
-        the_pusher[self.channel].trigger('game_over', {'game_outcome': go})
+        data = {'game_outcome': go.summary()}
+        the_pusher[self.channel].trigger('game_over', data)
 
     def draw_turn(self, turn, player, s):
-        the_pusher[self.channel].trigger('draw_turn', {'turn': turn, 'player': player, 'string': s})
+        data = {'player': player.summary(), 'string': s}
+        the_pusher[self.channel].trigger('draw_turn', data)
 
     def tiles_updated(self):
         the_pusher[self.channel].trigger('tiles_updated')
 
     def take_turn(implementor, turn):
-        super().take_turn(self.game, turn)
+        super(HumanPlayer, self).take_turn(self.game, turn)
 
     def is_human(self):
         return True
@@ -267,25 +300,25 @@ class Board(object):
         self.grid = [ [ ScrabbleConfig.board_layout( Coordinate(i, j) ) for j in xrange(0, length) ] for i in xrange(0, length) ]
                 
     def get(self, coord):
-        return self.get(coord.x, coord.y)
+        return self.get_xy(coord.x, coord.y)
 
-    def get(self, x, y):
+    def get_xy(self, x, y):
         try:
             return self.grid[x][y]
         except:
             return None
 
     def has_tile(self, coord):
-        return self.get(coord) == None
+        return self.get(coord).tile
 
-    def put(self, tile, coord):
+    def put_tile_coord(self, tile, coord):
         square = self.get(coord)
         if square:
             square.tile = tile
 
     def put(self, move):
         for c, t in move.letters.items():
-            self.put(t, c)
+            self.put_tile_coord(t, c)
 
     def occupied_squares(self):
         res = {}
@@ -321,18 +354,18 @@ class Board(object):
 class GameState(object):
     def __init__(self, word_lookup, players):
         self.players = players
-        self.bag = Bag()
-        self.board = Board()
-        self.move_count = 0
+        self._bag = Bag()
+        self._board = Board()
+        self._move_count = 0
         self.running = False
         self.current_player_index = 0
         self.pass_count = 0
         self.word_lookup = word_lookup
 
     def is_game_complete(self):
-        return (any([not p.has_tiles for p in self.players]) or
+        return (any([not p.has_tiles() for p in self.players]) or
             (self.pass_count == len(self.players)*2)  or
-            ((not self.bag) and self.pass_count == len(self.players)))
+            ((not self._bag.is_empty) and self.pass_count == len(self.players)))
 
     def finalize_scores(self):
         for player in self.players:
@@ -360,41 +393,42 @@ class GameState(object):
 
         def perform_pass(self):
             self.gs.pass_count += 1
-            return self.gs.current_player().name + " has passed.";
+            return self.gs.current_player.name + " has passed.";
 
         def perform_dump_letters(self, dl):
             self.gs.pass_count = 0
-            letters = dl.letters.sort()
+            letters = sorted(dl.letters)
 
-            self.gs.current_player().tiles.remove_many(letters)
+            self.gs.current_player.tiles.remove_many(letters)
 
-            self.gs.bag.put(letters)
-            self.gs.give_tiles(self.gs.current_player(), len(letters))
+            self.gs.tile_bag.put(letters)
+            self.gs.give_tiles(self.gs.current_player, len(letters))
 
-            return self.gs.current_player().name + " exchanged letters.";
+            return self.gs.current_player.name + " exchanged letters.";
 
         def perform_move(self, turn):
             self.gs.pass_count = 0
             move = Move(turn.letters)
-            if not move.is_valid():
+
+            if not move.is_valid:
                 raise (InvalidMoveException("Move violates position requirements or forms one or more invalid words."))
 
-            self.gs.board.put(move)
-            self.gs.current_player().add_score(move.score)
-            self.gs.current_player().tiles.remove_many([l for _, l in turn.letters])
-            self.give_tiles(self.gs.current_player(), len(turn.letters))
+            self.gs.playing_board.put(move)
+            self.gs.current_player.add_score(move.score())
+            self.gs.current_player.tiles.remove_many([l for _, l in turn.letters.items()])
+            self.gs.give_tiles(self.gs.current_player, len(turn.letters))
 
-            return self.gs.current_player().name + " scored " + str(move.scoreobj) + " points ";
+            return self.gs.current_player.name + " scored " + str(move.score()) + " points ";
 
         def take_turn(self, turn):
             summary = turn.perform(self)
-            self.gs.current_player().draw_turn(turn, self.gs.current_player(), summary)
+            self.gs.current_player.draw_turn(turn, self.gs.current_player, summary)
 
-            for player in self.gs.other_players():
-                player.draw_turn(turn, self.gs.current_player(), summary)
+            # for player in self.gs.other_players():
+                # player.draw_turn(turn, self.gs.current_player, summary)
 
             if not self.gs.is_game_complete():
-                if self.gs.is_opening_move() and not (type(turn) == PlaceMove):
+                if self.gs.is_opening_move and not (type(turn) == PlaceMove):
                     self.gs.move_count -= 1
 
                 self.gs.next_move()
@@ -403,19 +437,19 @@ class GameState(object):
 
     @property
     def tile_bag(self):
-        return self.bag
+        return self._bag
 
     @property
     def playing_board(self):
-        return self.board
+        return self._board
 
     @property
     def move_count(self):
-        return self.move_count
+        return self._move_count
 
     @move_count.setter
     def move_count(self, count):
-        self.move_count = count
+        self._move_count = count
 
     @property
     def is_opening_move(self):
@@ -440,34 +474,35 @@ class GameState(object):
     def next_move(self):
         self.move_count += 1
         self.current_player_index += 1
-        if self.current_player_index >= len(self.playersobject):
+        if self.current_player_index >= len(self.players):
             self.current_player_index = 0
 
-        self.current_player().notify_turn(self)
+        self.current_player.notify_turn(self.TurnImplementor(self))
 
     def other_players(self):
-        return [self.players[i] for i in len(self.players) if i != self.current_player_index]
+        return [self.players[i] for i in range(0, len(self.players)) if i != self.current_player_index]
 
-    def give_tiles(player, n):
-        if self.bag:
-            new_tiles = self.bag.take(n)
+    def give_tiles(self, player, n):
+        if self._bag:
+            new_tiles = self._bag.take(n)
             player.tiles.extend(new_tiles)
         player.tiles_updated()
 
     def start(self):
+        print "START"
         self.running = True
 
         for player in self.players:
-            player.tiles.extend(self.bag.take, ScrabbleConfig.max_tiles)
+            player.tiles.extend(self._bag.take(ScrabbleConfig.max_tiles))
             player.tiles_updated()
 
-        self.current_player().notify_turn(self)
+        self.current_player.notify_turn(self.TurnImplementor(self))
 
     def continue_game(self):
         if not self.running:
             self.start()
-        elif self.current_player().is_human:
-            self.current_player().notify_turn(self)
+        elif self.current_player.is_human:
+            self.current_player.notify_turn(self.TurnImplementor(self))
 
 """Singleton representing the game board, bag of tiles, players, move count, etc."""
 class Game(object):
@@ -488,21 +523,22 @@ class Move(object):
     def __init__(self, letters):
         self.letters = letters # [<coord, tile>, ...]
 
-        self.sorted = [(c, t) for c, t in self.letters.items()].sort(key=c)
+        self.sorted = sorted([(c, t) for c, t in self.letters.items()], key=lambda (c,t): c)
         self.first = self.sorted[0][0]
         self.last = self.sorted[-1][0]
+        self._score = None
 
     def check_board_prev(self, coord, orientation):
         prev = coord.prev(orientation)
-        return prev.is_valid() and Game.instance.playing_board().has_tile(prev)
+        return prev.is_valid() and Game.instance.playing_board.has_tile(prev)
 
     def check_board_next(self, coord, orientation):
         next = coord.next(orientation)
-        return next.is_valid() and Game.instance.playing_board().has_tile(next)
+        return next.is_valid() and Game.instance.playing_board.has_tile(next)
 
     def range(self):
         try:
-            Coordinate.between(self.first, self.last)
+            return Coordinate.between(self.first, self.last)
         except UnsupportedCoordinateException as e:
             raise InvalidMoveException(e.args[0])
 
@@ -518,10 +554,10 @@ class Move(object):
             return Orientation.horizontal
 
     def not_overwriting_tiles(self):
-        not any([Game.instance.has_tile(coord) for coord, _ in self.letters.items()])
+        return not any([Game.instance.playing_board.has_tile(coord) for coord, _ in self.letters.items()])
 
     def check_move_occupied(self, coord):
-        return (coord in self.letters.keys()) or Game.instance.has_tile(coord)
+        return (coord in self.letters.keys()) or Game.instance.playing_board.has_tile(coord)
 
     def opposite(self, orientation):
         return (orientation + 1) % 1
@@ -539,26 +575,53 @@ class Move(object):
         return all([ self.check_move_occupied(c) for c in self.range() ])
 
     def is_connected(self):
-        return any([ Game.instance.has_tile(c) or Game.instance.playing_board.has_neighbouring_tile(c) for c in self.range() ])
+        return any([ Game.instance.playing_board.has_tile(c) or Game.instance.playing_board.has_neighbouring_tile(c) for c in self.range() ])
 
     def contains_start_square(self):
-        return ScrabbleConfig.start_coordinate in self.letters.keys()
+        return ScrabbleConfig.start_coordinate() in self.letters.keys()
 
     def valid_placement(self):
-        return (self.not_overwriting_tiles() and self.is_aligned() and self.is_consecutive() and
-            (Game.instance.is_opening_move() and self.contains_start_square()) or
-            (not Game.instance.is_opening_move() and self.is_connected()))
+        asd =  (self.not_overwriting_tiles() and self.is_aligned() and self.is_consecutive() and
+            (Game.instance.is_opening_move and self.contains_start_square()) or
+            (not Game.instance.is_opening_move and self.is_connected()))
+        print "valid_placement: %s" % asd
+        return asd
+
+        # res = self.not_overwriting_tiles()
+        # print res
+        # res = res and self.is_aligned()
+        # print res
+        # res = res and self.is_consecutive()
+        # print res
+        # res2 = res and Game.instance.is_opening_move and self.contains_start_square()
+        # print res2
+        # res3 = res and not Game.instance.is_opening_move and self.is_connected()
+        # print res3
+        # print '----'
+
+        return res and (res2 or res3)
 
     def compute_runs(self):
+        print self.letters
         alt = self.opposite(self.orientation())
+
         alternate_runs = [Run(c, alt, self.letters) for c, _ in self.sorted]
-        return [Run(self.first, self.orientation(), self.letters)] + alternate_runs
+        alternate_runs = [a for a in alternate_runs if a.length() > 1]
+
+        r = Run(self.first, self.orientation(), self.letters)
+
+        print "Computed: %s" % r.to_word()
+        print "Alt: %s" % [a.to_word() for a in alternate_runs]
+
+        return [r] + alternate_runs
 
     def valid_runs(self, runs):
-        return all([r.is_valid() for r in runs])
+        asd = all([r.is_valid() for r in runs])
+        print "valid_runs: %s" % asd
+        return asd
 
     def compute_score(self, runs):
-        score = reduce(lambda r: r.score, runs)
+        score = reduce(lambda x, r: r.score(), runs, 0)
 
         if len(self.letters) == ScrabbleConfig.max_tiles:
             return score + ScrabbleConfig.all_tiles_bonus
@@ -566,14 +629,17 @@ class Move(object):
             return score
 
     def score(self):
-        if self.valid_placement():
-            runs = self.compute_runs()
-            if self.valid_runs(runs):
-                return self.compute_score(runs)
+        if not self._score:
+            if self.valid_placement():
+                runs = self.compute_runs()
+                if self.valid_runs(runs):
+                    self._score = self.compute_score(runs)
+                else:
+                    self._score = -1 # raise (InvalidMoveException("One or more invalid words were formed by this move."))
             else:
-                return -1 # raise (InvalidMoveException("One or more invalid words were formed by this move."))
-        else:
-            return -1 # raise (InvalidMoveException("Move violates positioning rules (i.e. not connected to other tiles)."))
+                self._score = -1 # raise (InvalidMoveException("Move violates positioning rules (i.e. not connected to other tiles)."))
+
+        return self._score
 
     def valid(self):
         return self.score() >= 0
@@ -590,6 +656,8 @@ class Move(object):
             l = self.letters.items()[0]
             return tpl % (l[1].letter, l[0].x, l[0].y)
 
+    __repr__ = __str__
+
 class Run(object):
     def __init__(self, coord, orientation, move_letters):
         self.coordinate = coord
@@ -598,15 +666,15 @@ class Run(object):
 
     def get_tile_from_move(self, coord):
         if coord in self.move_letters.keys():
-            return move_letters[coord]
+            return self.move_letters[coord]
         else:
-            return Game.instance.playing_board().get(coord).tile
+            return Game.instance.playing_board.get(coord).tile
 
     def check(self, coord, orientation, increment):
         if not coord.is_valid():
             return []
         else:
-            square = Game.instance.playing_board().get(coord)
+            square = Game.instance.playing_board.get(coord)
             tile = self.get_tile_from_move(coord)
             if tile:
                 next = increment(coord, orientation)
@@ -618,7 +686,7 @@ class Run(object):
         return self.check(self.coordinate, self.orientation, lambda c, o: c.prev(o))
 
     def next_squares(self):
-        return self.check(self.coordinate, self.orientation, lambda c, o: c.next(o))
+        return self.check(self.coordinate.next(self.orientation), self.orientation, lambda c, o: c.next(o))
 
     def squares(self):
         return list(reversed(self.prev_squares())) + self.next_squares()
@@ -630,9 +698,10 @@ class Run(object):
         return ''.join([t.letter for t in [t for _, t in self.squares()]])
 
     def is_valid(self):
-        return Game.instance.dictionary().is_valid_word(self.to_word())
+        print "Run: %s" % self.to_word()
+        return Game.instance.dictionary.is_valid_word(self.to_word())
 
     def score(self):
-        word_mult = reduce(lambda x, y: x*y, [s.word_multiplier for s, _ in self.squares], 1)
-        letter_score = sum([s.letter_multiplier*t.score for s, t in self.squares])
+        word_mult = reduce(lambda x, y: x*y, [s.word_multiplier for s, _ in self.squares()], 1)
+        letter_score = sum([s.letter_multiplier*t.score for s, t in self.squares()])
         return word_mult*letter_score

@@ -12,7 +12,6 @@ class WordLookup(object):
                 stripped = word.rstrip().lower()
 
                 if len(stripped) > 1:
-                    # TODO Check if newline still present
                     self.valid_words.add(stripped)
 
                     alphabetized = ''.join(sorted(stripped))
@@ -28,6 +27,7 @@ class WordLookup(object):
     def find_words_using(self, letters, use_char_at, min_length =2, max_length =15):
         return self.find(letters, min_length, max_length, use_char_at)
 
+    # XXX !! verificare
     def find(self, letters, min_length, max_length, use_char_at =-1):
         length = len(letters)
 
@@ -43,6 +43,7 @@ class WordLookup(object):
             chars = tmp
 
         maxlength = min(char_adjusted_length, max_length)
+        valid_words = set()
 
         for i in range(min_length, maxlength+1):
             generator = CombinationGenerator(char_adjusted_length, i)
@@ -55,7 +56,7 @@ class WordLookup(object):
                     word.append(chars[indices[j]])
                 
                 if use_char != -1:
-                    word.append(letters[useChar])
+                    word.append(letters[use_char])
 
                 word.sort()
                 possible = ''.join(word)
@@ -63,13 +64,13 @@ class WordLookup(object):
                 results = self.official_words.get(possible.lower())
 
                 if results:
-                    self.valid_words.update(results)
+                    valid_words.update(results)
 
         if use_char == -1:
-            return list(self.valid_words)
+            return list(valid_words)
         else:
             x = self.official_words.get(letters[use_char])
             if x:
-               return x + list(self.valid_words)
+               return x + list(valid_words)
             else:
-                return list(self.valid_words)
+                return list(valid_words)

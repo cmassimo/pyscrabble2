@@ -1,7 +1,7 @@
 body {
   padding-top: 50px;
 }
-.starter-template {
+.modal-body {
   padding: 40px 15px;
   text-align: center;
 }
@@ -10,14 +10,22 @@ body {
 #board td, .tile, .heightFix { width: 32px; height: 32px; }
 #board td { border: 1px solid #ccc; padding: 0; }
 #board td.highlight { border: 1px solid #f00; }
-#board .doubleLetter { background-color: #9696ff; }
-#board .tripleLeter { background-color: #0000fe; }
-#board .doubleWord { background-color: #ff9999; }
-#board .tripleWord { background-color: #f00; }
+#board .doubleLetter { background-color: midnightblue; }
+#board .tripleLetter { background-color: darkgreen; }
+#board .doubleWord { background-color: orange; }
+#board .tripleWord { background-color: red; }
 #playingArea #board td.tile-over { background-color: #ffd800; }
-#board .start { background-color: #ff3c3c; }
-.rack { width: 252px; height: 36px; }
-.tile { color: #333; background-color: #eee; text-align: center; position: absolute!important; font-weight: bold; font-size: 1.4em; line-height: 32px; user-select: none; float: left; }
+#board .start { background-color: gray; }
+.rack { height: 36px; }
+.tile { color: #000; background-color: lemonchiffon; text-align: center; font-weight: bold; font-size: 1.1em; line-height: 32px; user-select: none; float: left; margin-left:5px; position:relative; box-shadow: 2px 2px 2px #333 }
 .tile.movable { cursor: pointer; }
-.tile .tileScore { position: absolute; right: 2px; bottom: 2px; font-size: 0.6em; line-height: 1em; }
-#board td .tile { position: relative!important; left: 0px!important; top: 0px!important; }
+.tile .tileScore { position: absolute; right: 2px; top: 2px; font-size: 0.6em; line-height: 1em; }
+#board td .tile { position: relative!important; left: 0px!important; top: 0px!important; margin:0 0 !important; }
+#playingArea { margin-top: 2em; margin-left: 1em; position: relative; }
+
+#console .inner { height: 175px; width: 252px; overflow-y: scroll !important; border: 1px solid #ccc; }
+#console .entry { padding: 0.75em; color: #333; border-bottom: 1px solid #ccc; }
+#console .entry.first { border-bottom: none; }
+#console .entry.alt { background-color: #eee; }
+#players h2, #console h2 { margin-top: 0; }
+

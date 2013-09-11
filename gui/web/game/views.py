@@ -1,15 +1,63 @@
 from django.shortcuts import render
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.http import Http404
+
+import json
+# from pusher import Pusher
 
 from word_lookup import WordLookup
+from config import ScrabbleConfig, Coordinate
 from setup import *
 
 def index(request):
-    state = setup_game_state()
-    word_lookup = WordLookup()
-    for player in Game.instance.plyers:
-      apply_setup_values(word_lookup, player, 0, 0)
+    request.session['game'] = None
 
-    request.session['game'] = Game.instance
-
+    length = ScrabbleConfig.board_length
+    css_grid = [ [ ScrabbleConfig.board_layout( Coordinate(i, j) ) for j in xrange(0, length) ] for i in xrange(0, length) ]
         
-    return render(request, 'game/index.html')
+    return render(request, 'game/index.html', {'board': css_grid, 'board_length': length})
+
+def game(request):
+    post_params = request.POST
+
+    if request.session['game'] == None:
+        word_lookup = WordLookup()
+        state = setup_game_state(word_lookup, post_params['player1_name'], post_params['player2_name'])
+
+        for player in Game.instance.players:
+            apply_setup_values(word_lookup, player, 0, 0)
+
+        request.session['game'] = Game.instance
+    else:
+        Game.instance = request.session['game']
+
+    length = ScrabbleConfig.board_length
+    css_grid = [ [ ScrabbleConfig.board_layout( Coordinate(i, j) ) for j in xrange(0, length) ] for i in xrange(0, length) ]
+        
+    return render(request, 'game/game.html', {'board': css_grid, 'board_length': length, 'post_params': post_params})
+
+# @csrf_exempt
+# def auth(request):
+#     channel_name = request.POST['channel_name']
+#     socket_id = request.POST['socket_id']
+  
+#     p = Pusher(
+#         app_id='53591',
+#         key='a0a56b5e372395197020',
+#         secret='0f0db5e609af25a002c3'
+#     )
+  
+#     auth = p[channel_name].authenticate(socket_id)
+
+#     return HttpResponse(json.dumps(auth), mimetype="application/json")
+
+def continue_game(request):
+    Game.instance = request.session['game']
+
+    if Game.instance:
+        Game.instance.continue_game()
+        return HttpResponse(json.dumps(True), mimetype="application/json")
+    else:
+        raise Http404
+    pass

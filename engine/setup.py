@@ -1,11 +1,11 @@
 ﻿from utility_functions import maximum_score
-from types import GameState, Game, ComputerPlayer
+from support import GameState, Game, ComputerPlayer 
 from move_generator import MoveGenerator
 
-def setup_game_state():
-    Game.instance = GameState([
-        ComputerPlayer('ASD', 1),
-        ComputerPlayer('QWE', 2)
+def setup_game_state(word_lookup, name1, name2):
+    Game.instance = GameState(word_lookup, [
+        ComputerPlayer(name1, 1),
+        ComputerPlayer(name2, 2)
         ])
 
 def apply_setup_values(word_lookup, player, provider_code, utility_code):
@@ -19,17 +19,17 @@ def apply_setup_values(word_lookup, player, provider_code, utility_code):
     raise Exception("Unknown utility function code.")
 
   if utility_code == 0:
-    player.utility_function = MaximumScore
+    player.utility_function = maximum_score
   elif utility_code == 1:
-    player.utility_function = SmartSMoves
+    player.utility_function = smart_s_moves
   elif utility_code == 2:
-    player.utility_function = SaveCommon
+    player.utility_function = save_common
   elif utility_code == 3:
-    player.utility_function = OnlyPlay7s
+    player.utility_function = only_play_7s
   elif utility_code == 4:
-    player.utility_function = OnlyPlayOver5
+    player.utility_function = only_play_over5
   elif utility_code == 5:
-    player.utility_function = UseBonusSquares
+    player.utility_function = use_bonus_squares
   else:
     raise Exception("Unknown utility function code.")
 

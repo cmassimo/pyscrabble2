@@ -1,9 +1,11 @@
-﻿
+﻿from support import Move
 # default utility function, just score the move
 # let MaximumScore(tiles:TileList, move) = System.Convert.ToDouble(Move(move).Score)
 
 def maximum_score(tiles, move):
-    return float(Move(move).score)
+    score = float(Move(move).score())
+    # print score
+    return score
 # 
 
 # // increase 'score' of words that leave common letters left over

@@ -1,20 +1,94 @@
 {% extends 'base.html' %}
 
 {% block pagetitle %} Home {% endblock %}
-{% block title %} Bootstrap starter template {% endblock %}
 
-{% block content %}
-  Use this document as a way to quickly start any new project.<br> All you get is this text and a mostly barebones HTML document.
-{% endblock %}
+{% block content %} 
 
-<div class='row'>
-  <div class='span12'>
-    <div class='span8'>
+  <div class='row'>
+    <div class='span12'>
+      <div class='span8'>
 
+        <table id="board">
 
+          <tbody>
+            {% for row in board %}
+              <tr>
+                {% for val in row %}
+                  <td class="{{ val.css_class }}"><div class="heightFix"></div></td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
 
-    </div>
-    <div class='span4'>
+        </table>
+
+      </div>
+      <div class='span4'>
+      </div>
     </div>
   </div>
-</div>
+
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title">Welcome to PyScrabble2!</h4>
+        </div>
+
+        <div class="modal-body">
+          <p>This is a Python porting of <a href='https://code.google.com/p/sharpscrabble/' target='_blank'>F# Scrabble</a><br> we did for the course of Artificial Intelligence.
+          <h2>Select players</h2>
+          
+          <form action='{% url 'game' %}' class="form-horizontal" role="form" id='new_game' method='post'>
+            {% csrf_token %}
+
+            <div class="form-group">
+              <div class="btn-group" data-toggle="buttons">
+                <label class="btn btn-primary">
+                  <input type="radio" name="player1_type" id="player1_type" value='human'> Human
+                </label>
+                <label class="btn btn-primary">
+                  <input type="radio" name="player1_type" id="player1_type" value='computer'> Computer
+                </label>
+              </div>
+              <label for="player1_name" class="col-lg-2 control-label">Name</label>
+              <div class="col-lg-4">
+                <input type="text" class="form-control" id="player1_name" name="player1_name" placeholder="Name">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="btn-group" data-toggle="buttons">
+                <label class="btn btn-primary">
+                  <input type="radio" name="player2_type" id="player_type" value='human'> Human
+                </label>
+                <label class="btn btn-primary">
+                  <input type="radio" name="player2_type" id="player2_type" value='computer'> Computer
+                </label>
+              </div>
+              <label for="player2_name" class="col-lg-2 control-label">Name</label>
+              <div class="col-lg-4">
+                <input type="text" class="form-control" id="player2_name" name="player2_name" placeholder="Name">
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <div class="">
+                <button type="submit" class="btn btn-info">Go!</button>
+              </div>
+            </div>
+          </form>
+
+        </div>
+
+        <div class="modal-footer">
+          <!-- <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary">Save changes</button> -->
+        </div>
+
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
+
+{% endblock %}

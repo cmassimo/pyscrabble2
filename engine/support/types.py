@@ -23,19 +23,37 @@ class Tile(object):
     def __get_score(cls, letter):
         l = letter.upper()
         
-        if l in ['E', 'A', 'I', 'O', 'N', 'R', 'T', 'L', 'S', 'U']:
+        # en
+        # if l in ['E', 'A', 'I', 'O', 'N', 'R', 'T', 'L', 'S', 'U']:
+        #     return 1
+        # elif l in ['D', 'G']:
+        #     return 2
+        # elif l in ['B', 'C', 'M', 'P']:
+        #     return 3
+        # elif l in [ 'F', 'H', 'V',  'W', 'Y']:
+        #     return 4
+        # elif l == 'K':
+        #     return 5
+        # elif l in ['J', 'X']:
+        #     return 8
+        # elif l in ['Q', 'Z']:
+        #     return 10
+        # elif l == ' ':
+        #     return 0
+        # else:
+        #     raise (Exception("Only uppercase characters A - Z and a blank space are supported in Scrabble."))
+
+        if l in ['E', 'A', 'I', 'O']:
             return 1
-        elif l in ['D', 'G']:
+        elif l in ['C', 'R', 'S', 'T']: 
             return 2
-        elif l in ['B', 'C', 'M', 'P']:
+        elif l in ['L', 'M', 'N', 'U']:
             return 3
-        elif l in [ 'F', 'H', 'V',  'W', 'Y']:
-            return 4
-        elif l == 'K':
+        elif l in ['B', 'D', 'F', 'P', 'V']:
             return 5
-        elif l in ['J', 'X']:
+        elif l in ['G', 'H', 'Z']:
             return 8
-        elif l in ['Q', 'Z']:
+        elif l == 'Q':
             return 10
         elif l == ' ':
             return 0

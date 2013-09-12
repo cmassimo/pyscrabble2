@@ -3,10 +3,10 @@
 # let MaximumScore(tiles:TileList, move) = System.Convert.ToDouble(Move(move).Score)
 
 def maximum_score(tiles, move):
-    score = float(Move(move).score())
-    # print score
-    return score
-# 
+    return float(Move(move).score())
+
+# def save_common(tiles, move):
+  
 
 # // increase 'score' of words that leave common letters left over
 # // since we'll then have a better chance at a 7-letter word

@@ -5,7 +5,10 @@ from pusher import Pusher
 
 from squares import *
 
-WORDLIST_PATH = os.path.dirname(os.path.abspath(__file__)) + "/../twl.txt"
+#en
+# WORDLIST_PATH = os.path.dirname(os.path.abspath(__file__)) + "/../twl.txt"
+#it
+WORDLIST_PATH = os.path.dirname(os.path.abspath(__file__)) + "/../abc.sort.txt"
 DEBUG = False
 MAX_MOVES = 6
 DEBUG_CHANNEL = ''
@@ -96,7 +99,10 @@ class Coordinate(object):
         # return int(str(self.x) + str(self.y))
 
 class ScrabbleConfig(object):
-    letter_quantity = {'A': 9, 'C': 2, 'B': 2, 'E': 12, 'D': 4, 'G': 3, 'F': 2, 'I': 9, 'H': 2, 'K': 1, 'J': 1, 'M': 2, 'L': 4, 'O': 8, 'N': 6, 'Q': 1, 'P': 2, 'S': 4, 'R': 6, 'U': 4, 'T': 6, 'W': 2, 'V': 2, 'Y': 2, 'X': 1, 'Z': 1}
+    # en
+    # letter_quantity = {'A': 9, 'C': 2, 'B': 2, 'E': 12, 'D': 4, 'G': 3, 'F': 2, 'I': 9, 'H': 2, 'K': 1, 'J': 1, 'M': 2, 'L': 4, 'O': 8, 'N': 6, 'Q': 1, 'P': 2, 'S': 4, 'R': 6, 'U': 4, 'T': 6, 'W': 2, 'V': 2, 'Y': 2, 'X': 1, 'Z': 1}
+    # it
+    letter_quantity = {'A': 14, 'C': 6, 'B': 3, 'E': 11, 'D': 3, 'G': 2, 'F': 3, 'I': 12, 'H': 2, 'M': 5, 'L': 5, 'O': 15, 'N': 5, 'Q': 1, 'P': 3, 'S': 6, 'R': 6, 'U': 5, 'T': 6, 'V': 3, 'Z': 2}
     max_tiles = 7
     all_tiles_bonus = 50
     board_length = 15
@@ -105,17 +111,38 @@ class ScrabbleConfig(object):
     def start_coordinate():
         return Coordinate(7, 7)
 
+    # @staticmethod
+    # def board_layout(c):
+    #     if (c.x, c.y) in [(0, 0), (0, 7), (0, 14), (7, 0), (14, 0), (7, 14), (14, 7), (14, 14)]:
+    #         return TripleWordSquare()
+    #     elif (c.x, c.y) in [(5, 1), (9, 1), (1, 5), (5, 5), (9, 5), (13, 5), (1, 9), (5, 9),
+    #         (9, 9), (13, 9), (5, 13), (9, 13)]:
+    #         return TripleLetterSquare()
+    #     elif (c.x, c.y) in [(1, 1), (2, 2), (3, 3), (4, 4), (10, 4), (11, 3), (12, 2), (13, 1),
+    #         (1, 13), (2, 12), (3, 11), (4, 10), (13, 13), (10, 10), (12, 12), (11, 11)]:
+    #         return DoubleWordSquare()
+    #     elif (c.x, c.y) in [(3, 0), (11, 0), (6, 2), (8, 2), (0, 3), (7, 3), (14, 3), (2, 6), (6, 6), (8, 6), (12, 6), (3, 7), (11, 7), (2, 8), (6, 8), (8, 8), (12, 8), (0, 11), (7, 11), (14, 11), (6, 12), (8, 12), (3, 14), (11, 14)]:
+    #         return DoubleLetterSquare()
+    #     elif (c.x, c.y) == (7, 7):
+    #         return StartSquare()
+    #     else:
+    #         return NormalSquare()
+    
+
+    # aw-like
     @staticmethod
     def board_layout(c):
-        if (c.x, c.y) in [(0, 0), (0, 7), (0, 14), (7, 0), (14, 0), (7, 14), (14, 7), (14, 14)]:
+        if (c.x, c.y) in [(0, 2), (0, 12), (2, 0), (2, 14), (12, 0), (12, 14), (14, 2), (14, 12)]:
             return TripleWordSquare()
-        elif (c.x, c.y) in [(5, 1), (9, 1), (1, 5), (5, 5), (9, 5), (13, 5), (1, 9), (5, 9),
-            (9, 9), (13, 9), (5, 13), (9, 13)]:
+        elif (c.x, c.y) in [(0, 4), (0, 10), (1, 1), (1, 13), (2, 6), (2, 8), (3, 3), (3, 11),
+            (4, 0), (4, 14), (5, 5), (5, 9), (6, 2), (6, 12), (8, 12), (8, 2), (9, 9), (9, 5), (10, 14),
+            (10, 0), (11, 11), (11, 3), (12, 8), (12, 6), (13, 13), (13, 1), (14, 10), (14, 4)]:
             return TripleLetterSquare()
-        elif (c.x, c.y) in [(1, 1), (2, 2), (3, 3), (4, 4), (10, 4), (11, 3), (12, 2), (13, 1),
-            (1, 13), (2, 12), (3, 11), (4, 10), (13, 13), (10, 10), (12, 12), (11, 11)]:
+        elif (c.x, c.y) in [(1, 5), (1, 9), (3, 7), (5, 1), (5, 13), (7, 3), (7, 11), (8, 10),
+            (9, 1), (9, 13), (11, 7), (13, 5), (13, 9)]:
             return DoubleWordSquare()
-        elif (c.x, c.y) in [(3, 0), (11, 0), (6, 2), (8, 2), (0, 3), (7, 3), (14, 3), (2, 6), (6, 6), (8, 6), (12, 6), (3, 7), (11, 7), (2, 8), (6, 8), (8, 8), (12, 8), (0, 11), (7, 11), (14, 11), (6, 12), (8, 12), (3, 14), (11, 14)]:
+        elif (c.x, c.y) in [(2, 2), (2, 12), (4, 6), (4, 8), (6, 4), (6, 10), (8, 4), (8, 10),
+            (10, 6), (10, 8), (12, 2), (12, 12)]:
             return DoubleLetterSquare()
         elif (c.x, c.y) == (7, 7):
             return StartSquare()

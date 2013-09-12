@@ -1,7 +1,7 @@
 #!/Users/cmass/.virtualenv/scrabble-django-27/bin/python
 
 import sys
-sys.path.append('../../engine')
+sys.path.append('./engine')
 from word_lookup import WordLookup
 from config import ScrabbleConfig, Coordinate
 from setup import *

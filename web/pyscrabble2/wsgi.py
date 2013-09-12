@@ -15,7 +15,7 @@ framework.
 """
 import os, sys
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../../../../engine' )
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../../engine' )
 #sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # We defer to a DJANGO_SETTINGS_MODULE already in the environment. This breaks

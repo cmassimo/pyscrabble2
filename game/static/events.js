@@ -59,8 +59,9 @@ function append_to_square(e, square)
 
 $(function() {
   var pusher = new Pusher('a0a56b5e372395197020');
-  var channel1 = pusher.subscribe('computer_1');
-  var channel2 = pusher.subscribe('computer_2');
+
+  var channel1 = pusher.subscribe('computer_' + $('#player-0').data('pid'));
+  var channel2 = pusher.subscribe('computer_' + $('#player-1').data('pid'));
 
   channel1.bind('pusher:subscription_succeeded', function() {
     console.log('--- channel1 subscription_succeeded');
@@ -75,27 +76,27 @@ $(function() {
     console.log('--- channel2 subscription_succeeded');
   });
 
-  pusher.bind('draw_turn', function(data) {
+  channel1.bind('draw_turn', function(data) {
     console.log('draw_turn');
     console.log(data);
 
     var entry = $("<div class='entry'>"+ data.string +"</div>");
     log(entry);
-    update_rack(data.player.pid-1, data.player.tiles);
+    update_rack(0, data.player.tiles);
     // $('.tile.debug').remove();
     add_move_to_board(data.move);
     $('.tile.debug').remove();
 
-    $('#player-'+ (data.player.pid-1) +' .playerScore').html(data.player.score)
+    $('#player-0 .playerScore').html(data.player.score)
 
   });
 
-  pusher.bind('notify_turn', function(data) {
+  channel1.bind('notify_turn', function(data) {
     console.log('notify_turn');
     console.log(data);
   });
 
-  pusher.bind('game_over', function(data) {
+  channel1.bind('game_over', function(data) {
     console.log('game_over');
     console.log(data);
 
@@ -108,13 +109,41 @@ $(function() {
     console.log(data);
   });
 
+  channel2.bind('draw_turn', function(data) {
+    console.log('draw_turn');
+    console.log(data);
+
+    var entry = $("<div class='entry'>"+ data.string +"</div>");
+    log(entry);
+    update_rack(1, data.player.tiles);
+    // $('.tile.debug').remove();
+    add_move_to_board(data.move);
+    $('.tile.debug').remove();
+
+    $('#player-1 .playerScore').html(data.player.score)
+
+  });
+
+  channel2.bind('notify_turn', function(data) {
+    console.log('notify_turn');
+    console.log(data);
+  });
+
+  channel2.bind('game_over', function(data) {
+    console.log('game_over');
+    console.log(data);
+
+    entry = $("<div class='entry'>Game has ended! Finalising scores.</div>");
+    log(entry);
+  });
+
   channel2.bind('tiles_updated', function(data) {
     console.log('ch2 tiles_updated');
     console.log(data);
   });
 
 
-  pusher.bind('debug', function(data) {
+  channel1.bind('debug', function(data) {
     console.log('debug');
     console.log(data);
 
@@ -123,7 +152,7 @@ $(function() {
     }
   });
 
-  pusher.bind('clear_debug', function(data) {
+  channel1.bind('clear_debug', function(data) {
     $('.tile.debug').remove();
   });
 

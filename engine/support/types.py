@@ -1,5 +1,7 @@
 from random import shuffle, random
 import json
+import hashlib
+import datetime
 
 from exceptions import *
 from config import ScrabbleConfig, Coordinate, Orientation, the_pusher, DEBUG, MAX_MOVES
@@ -169,9 +171,10 @@ class PlaceMove(Turn):
 
 
 class Player(object):
-    def __init__(self, name, pid):
+    def __init__(self, name):
         self.name = name
-        self.pid = pid
+        # str((datetime.datetime.now()-datetime.datetime(1970,1,1)).total_seconds())
+        self.pid = hashlib.md5(name + str(datetime.datetime.now())).hexdigest()[0:6]
         self.tiles = TileList()
         self.score = 0
 
@@ -215,8 +218,8 @@ class GameOutcome(object):
         return {'winners': [w.summary() for w in self.winners], 'all_players': [a.summary() for a in self.all_updated_players]}
 
 class ComputerPlayer(Player):
-    def __init__(self, name, pid):
-        super(ComputerPlayer, self).__init__(name, pid)
+    def __init__(self, name):
+        super(ComputerPlayer, self).__init__(name)
         self.passes = 0
         self.channel = 'computer_' + str(self.pid)
 
@@ -272,7 +275,7 @@ class ComputerPlayer(Player):
 
 class HumanPlayer(Player):
     def __init__(self, name):
-        super(HumanPlayer, self).__init__(name, 0)
+        super(HumanPlayer, self).__init__(name)
         self.channel = 'human'
 
     def notify_turn(self, implementor):

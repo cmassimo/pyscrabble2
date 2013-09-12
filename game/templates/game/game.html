@@ -29,7 +29,7 @@
         <div id="players">
           <h3>Players</h3>
           {% for player in request.session.game.players %}    
-            <div class="player" id="player-{{ forloop.counter0 }}">
+            <div class="player" id="player-{{ forloop.counter0 }}" data-pid="{{ player.pid }}">
                 <h4>{{ player.name }}, Score: <span class="playerScore">{{ player.score }}</span></h4>
                 <div class="rack">
                 </div>

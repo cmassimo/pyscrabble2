@@ -4,8 +4,8 @@ from move_generator import MoveGenerator
 
 def setup_game_state(word_lookup, name1, name2):
     Game.instance = GameState(word_lookup, [
-        ComputerPlayer(name1, 1),
-        ComputerPlayer(name2, 2)
+        ComputerPlayer(name1),
+        ComputerPlayer(name2)
         ])
 
 def apply_setup_values(word_lookup, player, provider_code, utility_code):

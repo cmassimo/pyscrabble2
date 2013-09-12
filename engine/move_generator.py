@@ -1,6 +1,6 @@
 from support import Move, PlaceMove, Pass, Game, Tile
 from word_lookup import WordLookup
-from config import Coordinate, Orientation
+from config import Coordinate, Orientation, the_pusher, DEBUG
 
 class MoveGenerator(object):
     def __init__(self, word_lookup):
@@ -23,8 +23,8 @@ class MoveGenerator(object):
         horizontal = [True, False]
         moves = []
 
-        print "Calculating moves for first move"
-        print tiles_in_hand
+        if DEBUG:
+            print "calculate_first_move"
 
         for o in horizontal:
             for word in possible_words:
@@ -35,6 +35,8 @@ class MoveGenerator(object):
 
         if positive_scores:
             to_be_played = max(positive_scores, key=lambda ps: utility_mapper(tiles_in_hand, ps.letters))
+            if DEBUG:
+                print to_be_played
             return PlaceMove(to_be_played.letters)
         else:
             return Pass()
@@ -54,31 +56,38 @@ class MoveGenerator(object):
                         unchecked_starts.append( Coordinate(c.x, c.y - i) )
 
         vmoves = []
-        letter_pos = []
+        coords_letters = []
 
         for start in unchecked_starts:
             for i in range(0, len(word)):
                 coord = start.next(o, i)
                 if not board.has_tile(coord):
-                    letter_pos.append( (coord, Tile(word.upper()[i])) )
+                    coords_letters.append( (coord, Tile(word.upper()[i])) )
 
-            if letter_pos:
-                move = Move(dict(letter_pos))
+            if coords_letters:
+                move = Move(dict(coords_letters))
                 if move.is_valid:
                     vmoves.append(move)
+        
+        if DEBUG:
+            for m in vmoves:
+                the_pusher['computer_1'].trigger('debug', [{'x': c.x, 'y': c.y, 'tile': {'letter': t.letter, 'score': t.score}} for c, t in m.letters.items()])
 
-        print "valid_moves len: %5i" % len(vmoves)
         return vmoves
 
     def calculate_best_move(self, tiles_in_hand, board, utility_mapper):
         letters = [tile.letter for tile in tiles_in_hand]
         orientations = Orientation.values()
 
-        print "Calculating moves for best move"
-        print tiles_in_hand
-        
+        if DEBUG:
+            print "calculate_best_move"
+            board.pretty_print()
+            print
+
         moves = []
-        for coordinate in board.occupied_squares():
+        for coordinate in board.occupied_squares().keys():
+            if DEBUG:
+                the_pusher['computer_1'].trigger('clear_debug')
             tile = board.get(coordinate).tile
             possible_words = self.lookup.find_words_using([tile.letter] + letters, 0)
 
@@ -91,6 +100,8 @@ class MoveGenerator(object):
 
         if positive_scores:
             to_be_played = max(positive_scores, key=lambda ps: utility_mapper(tiles_in_hand, ps.letters))
+            if DEBUG:
+                print to_be_played
             return PlaceMove(to_be_played.letters)
         else:
             return Pass()

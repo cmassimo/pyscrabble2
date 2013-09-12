@@ -4,6 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import Http404
 
 import json
+from multiprocessing import Process
 # from pusher import Pusher
 
 from word_lookup import WordLookup
@@ -23,7 +24,7 @@ def game(request):
 
     if request.session['game'] == None:
         word_lookup = WordLookup()
-        state = setup_game_state(word_lookup, post_params['player1_name'], post_params['player2_name'])
+        setup_game_state(word_lookup, post_params['player1_name'], post_params['player2_name'])
 
         for player in Game.instance.players:
             apply_setup_values(word_lookup, player, 0, 0)
@@ -56,8 +57,12 @@ def continue_game(request):
     Game.instance = request.session['game']
 
     if Game.instance:
-        Game.instance.continue_game()
+        Process(target=go, args=(Game.instance,)).start()
         return HttpResponse(json.dumps(True), mimetype="application/json")
     else:
         raise Http404
-    pass
+
+def go(state):
+    state.continue_game()
+
+

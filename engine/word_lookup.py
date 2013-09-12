@@ -27,7 +27,6 @@ class WordLookup(object):
     def find_words_using(self, letters, use_char_at, min_length =2, max_length =15):
         return self.find(letters, min_length, max_length, use_char_at)
 
-    # XXX !! verificare
     def find(self, letters, min_length, max_length, use_char_at =-1):
         length = len(letters)
 

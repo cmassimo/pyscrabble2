@@ -21,6 +21,7 @@ body {
 .tile.movable { cursor: pointer; }
 .tile .tileScore { position: absolute; right: 2px; top: 2px; font-size: 0.6em; line-height: 1em; }
 #board td .tile { position: relative!important; left: 0px!important; top: 0px!important; margin:0 0 !important; }
+#board td .tile.debug {background-color: dodgerblue; color:white !important; }
 #playingArea { margin-top: 2em; margin-left: 1em; position: relative; }
 
 #console .inner { height: 175px; width: 252px; overflow-y: scroll !important; border: 1px solid #ccc; }

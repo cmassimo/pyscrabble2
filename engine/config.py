@@ -6,6 +6,8 @@ from pusher import Pusher
 from squares import *
 
 WORDLIST_PATH = os.path.dirname(os.path.abspath(__file__)) + "/../twl.txt"
+DEBUG = False
+MAX_MOVES = 6
 
 the_pusher = Pusher(
     app_id='53591',
@@ -62,14 +64,15 @@ class Coordinate(object):
         else:
             return Coordinate(self.x, self.y - 1)
 
+    @staticmethod
     def between(c0, c1):
         first = min(c0, c1)
         last = max(c0, c1)
 
         if first.x == last.x:
-            return [Coordinate(first.x, y) for y in range(first.y, last.y+1)]
+            return [Coordinate(first.x, y) for y in xrange(first.y, last.y+1)]
         elif first.y == last.y:
-            return [Coordinate(x, first.y) for x in range(first.x, last.x+1)]
+            return [Coordinate(x, first.y) for x in xrange(first.x, last.x+1)]
         else:
             raise UnsupportedCoordinateException("Coordinates are not on the same axis.")
 
@@ -82,7 +85,7 @@ class Coordinate(object):
 
     def __cmp__(self, other):
         cmp_x = self.x.__cmp__(other.x)
-        if cmp_x:
+        if not cmp_x:
             return self.y.__cmp__(other.y)
         else:
             return cmp_x

@@ -1,3 +1,4 @@
+/* BEGIN utils */
 function log(entry) {
   if ($('.inner div').size() % 2 == 0)
     entry.addClass('alt')
@@ -15,15 +16,19 @@ function update_rack(player_id, tiles) {
 
 }
 
-function add_move_to_board(move) {
+function add_move_to_board(move, cls) {
+  if (cls == undefined)
+    cls = ''
+  
   for(var i in move) {
-    put_tile(move[i].x, move[i].y, move[i].tile);
+    put_tile(move[i].x, move[i].y, move[i].tile, cls);
   }
 }
 
-function make_tile(t, can_move) {
+function make_tile(t, can_move, cls) {
+    var classes = can_move ? ('tile movable ' + cls) : ('tile ' + cls);
     var t = $('<div>')
-        .addClass(can_move ? 'tile movable' : 'tile')
+        .addClass(classes)
         .html(t.letter)
         .data('letter', t.letter)
         .append($('<span>').addClass('tileScore').text(t.score));
@@ -31,9 +36,9 @@ function make_tile(t, can_move) {
     return t;
 }
 
-function put_tile(x, y, tile)
+function put_tile(x, y, tile, cls)
 {
-    var element = make_tile(tile, false);
+    var element = make_tile(tile, false, cls);
     var square = find_square(x, y);
     append_to_square(element, square);
     square.addClass('occupied');
@@ -50,6 +55,8 @@ function append_to_square(e, square)
     square.children().first().html($(e));
 }
 
+/* END utils */
+
 $(function() {
   var pusher = new Pusher('a0a56b5e372395197020');
   var channel1 = pusher.subscribe('computer_1');
@@ -61,7 +68,7 @@ $(function() {
     entry = $("<div class='entry first'>Game started.</div>");
     log(entry);
 
-    $.get("http://localhost:8000/continue");
+    $.get("/continue");
   });
 
   channel2.bind('pusher:subscription_succeeded', function() {
@@ -75,7 +82,9 @@ $(function() {
     var entry = $("<div class='entry'>"+ data.string +"</div>");
     log(entry);
     update_rack(data.player.pid-1, data.player.tiles);
+    // $('.tile.debug').remove();
     add_move_to_board(data.move);
+    $('.tile.debug').remove();
 
     $('#player-'+ (data.player.pid-1) +' .playerScore').html(data.player.score)
 
@@ -102,6 +111,20 @@ $(function() {
   channel2.bind('tiles_updated', function(data) {
     console.log('ch2 tiles_updated');
     console.log(data);
+  });
+
+
+  pusher.bind('debug', function(data) {
+    console.log('debug');
+    console.log(data);
+
+    for(var i in data) {
+      add_move_to_board(data, 'debug');
+    }
+  });
+
+  pusher.bind('clear_debug', function(data) {
+    $('.tile.debug').remove();
   });
 
 });

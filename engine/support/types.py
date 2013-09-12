@@ -2,7 +2,7 @@ from random import shuffle, random
 import json
 
 from exceptions import *
-from config import ScrabbleConfig, Coordinate, Orientation, the_pusher
+from config import ScrabbleConfig, Coordinate, Orientation, the_pusher, DEBUG, MAX_MOVES
 from word_lookup import WordLookup
 
 class ObjEncoder(json.JSONEncoder):
@@ -134,7 +134,10 @@ class Bag(object):
         if self.inventory:
             can_take = min(len(self.inventory), n)
 
-            return [self.inventory.pop(i) for i in range(0, can_take)]
+            taken = [self.inventory[i] for i in range(0, can_take)]
+            del self.inventory[0:can_take]
+
+            return taken
         else:
             raise (Exception("The bag is empty, you can not take any tiles."))
 
@@ -254,18 +257,18 @@ class ComputerPlayer(Player):
     def notify_game_over(self, go):
         data = {'game_outcome': go.summary()}
         the_pusher[self.channel].trigger('game_over', data)
-        # print "game_over: %s" % go.summary()
+        # print "********************************* game_over: %s" % go.summary()
 
     def draw_turn(self, turn, player, s):
         data = {'player': player.summary(), 'string': s}
         if type(turn) == PlaceMove:
             data['move'] = [{'x': c.x, 'y': c.y, 'tile': {'letter': t.letter, 'score': t.score}} for c, t in turn.letters.items()]
         the_pusher[self.channel].trigger('draw_turn', data)
-        # print "draw_turn: %s self.passes: %2i" % (s, self.passes)
+        # print "********************************* draw_turn: %s self.passes: %2i" % (s, self.passes)
 
     def tiles_updated(self):
         the_pusher[self.channel].trigger('tiles_updated')
-        # print "tiles_updated: %2i" % self.passes
+        # print "********************************* tiles_updated: %2i" % self.passes
 
 class HumanPlayer(Player):
     def __init__(self, name):
@@ -335,21 +338,21 @@ class Board(object):
         return any([ self.has_tile(n) for n in coord.neighbors() ])
 
     def pretty_print(self):
-        print "   "
+        header = "   "
         for j in range(0, len(self.grid)):
-            print "%2i " % j
-        print ""
+            header += "%2i " % j
+        print header
 
         for i in range(0, len(self.grid[0])):
-            print "%2i " % i
+            row = "%2i " % i
             for j in range(0, len(self.grid)):
                 s = self.grid[j][i]
                 if s.tile:
                     tile = s.tile
-                    print " %s " % tile.letter
+                    row += " %s " % tile.letter
                 else:
-                    print " _ "
-            print ""
+                    row += " _ "
+            print row
 
 class GameState(object):
     def __init__(self, word_lookup, players):
@@ -365,7 +368,7 @@ class GameState(object):
     def is_game_complete(self):
         return (any([not p.has_tiles() for p in self.players]) or
             (self.pass_count == len(self.players)*2)  or
-            ((not self._bag.is_empty) and self.pass_count == len(self.players)))
+            ((not self._bag.is_empty) and self.pass_count == len(self.players))) or (DEBUG and self._move_count >= MAX_MOVES)
 
     def finalize_scores(self):
         for player in self.players:
@@ -483,7 +486,7 @@ class GameState(object):
         return [self.players[i] for i in range(0, len(self.players)) if i != self.current_player_index]
 
     def give_tiles(self, player, n):
-        if self._bag:
+        if not self._bag.is_empty():
             new_tiles = self._bag.take(n)
             player.tiles.extend(new_tiles)
         player.tiles_updated()
@@ -528,6 +531,7 @@ class Move(object):
         self.last = self.sorted[-1][0]
         self._score = None
 
+
     def check_board_prev(self, coord, orientation):
         prev = coord.prev(orientation)
         return prev.is_valid() and Game.instance.playing_board.has_tile(prev)
@@ -560,7 +564,7 @@ class Move(object):
         return (coord in self.letters.keys()) or Game.instance.playing_board.has_tile(coord)
 
     def opposite(self, orientation):
-        return (orientation + 1) % 1
+        return (orientation + 1) % 2
 
     def is_aligned(self):
         if len(self.letters) <= 1:
@@ -581,11 +585,9 @@ class Move(object):
         return ScrabbleConfig.start_coordinate() in self.letters.keys()
 
     def valid_placement(self):
-        asd =  (self.not_overwriting_tiles() and self.is_aligned() and self.is_consecutive() and
+        return (self.not_overwriting_tiles() and self.is_aligned() and self.is_consecutive() and
             (Game.instance.is_opening_move and self.contains_start_square()) or
             (not Game.instance.is_opening_move and self.is_connected()))
-        print "valid_placement: %s" % asd
-        return asd
 
         # res = self.not_overwriting_tiles()
         # print res
@@ -602,23 +604,15 @@ class Move(object):
         return res and (res2 or res3)
 
     def compute_runs(self):
-        print self.letters
         alt = self.opposite(self.orientation())
 
         alternate_runs = [Run(c, alt, self.letters) for c, _ in self.sorted]
         alternate_runs = [a for a in alternate_runs if a.length() > 1]
 
-        r = Run(self.first, self.orientation(), self.letters)
-
-        print "Computed: %s" % r.to_word()
-        print "Alt: %s" % [a.to_word() for a in alternate_runs]
-
-        return [r] + alternate_runs
+        return [Run(self.first, self.orientation(), self.letters)] + alternate_runs
 
     def valid_runs(self, runs):
-        asd = all([r.is_valid() for r in runs])
-        print "valid_runs: %s" % asd
-        return asd
+        return all([r.is_valid() for r in runs])
 
     def compute_score(self, runs):
         score = reduce(lambda x, r: r.score(), runs, 0)
@@ -650,10 +644,10 @@ class Move(object):
 
     def __str__(self):
         tpl = "%c : (%2i, %2i)\n"
-        if len(self.letters) > 1:
-            return ''.join([tpl % (l[1].letter, l[0].x, l[0].y) for l in self.letters.items()])
+        if len(self.sorted) > 1:
+            return ''.join([tpl % (l[1].letter, l[0].x, l[0].y) for l in self.sorted])
         else:
-            l = self.letters.items()[0]
+            l = self.sorted[0]
             return tpl % (l[1].letter, l[0].x, l[0].y)
 
     __repr__ = __str__
@@ -698,7 +692,6 @@ class Run(object):
         return ''.join([t.letter for t in [t for _, t in self.squares()]])
 
     def is_valid(self):
-        print "Run: %s" % self.to_word()
         return Game.instance.dictionary.is_valid_word(self.to_word())
 
     def score(self):

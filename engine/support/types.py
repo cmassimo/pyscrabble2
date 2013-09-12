@@ -1,4 +1,4 @@
-from random import shuffle, random
+from random import shuffle
 import json
 import hashlib
 import datetime

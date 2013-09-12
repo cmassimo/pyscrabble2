@@ -8,6 +8,7 @@ from squares import *
 WORDLIST_PATH = os.path.dirname(os.path.abspath(__file__)) + "/../twl.txt"
 DEBUG = False
 MAX_MOVES = 6
+DEBUG_CHANNEL = ''
 
 the_pusher = Pusher(
     app_id='53591',

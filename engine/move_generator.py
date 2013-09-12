@@ -1,16 +1,16 @@
 from support import Move, PlaceMove, Pass, Game, Tile
 from word_lookup import WordLookup
-from config import Coordinate, Orientation, the_pusher, DEBUG
+from config import Coordinate, Orientation, the_pusher, DEBUG, DEBUG_CHANNEL
 
 class MoveGenerator(object):
     def __init__(self, word_lookup):
         self.lookup = word_lookup
 
     def possible_starts(self, word, horizontal):
-        self.highest_start = max(0, (7 - len(word) + 1))
+        highest_start = max(0, (7 - len(word) + 1))
 
         starts = []
-        for i in range(self.highest_start, 8):
+        for i in range(highest_start, 8):
             if horizontal:
                 starts.append(Coordinate(i, 7))
             else:
@@ -68,10 +68,8 @@ class MoveGenerator(object):
                 move = Move(dict(coords_letters))
                 if move.is_valid:
                     vmoves.append(move)
-        
-        if DEBUG:
-            for m in vmoves:
-                the_pusher['computer_1'].trigger('debug', [{'x': c.x, 'y': c.y, 'tile': {'letter': t.letter, 'score': t.score}} for c, t in m.letters.items()])
+                    if DEBUG:
+                        the_pusher[DEBUG_CHANNEL].trigger('debug', [{'x': c.x, 'y': c.y, 'tile': {'letter': t.letter, 'score': t.score}} for c, t in move.letters.items()])
 
         return vmoves
 
@@ -87,7 +85,7 @@ class MoveGenerator(object):
         moves = []
         for coordinate in board.occupied_squares().keys():
             if DEBUG:
-                the_pusher['computer_1'].trigger('clear_debug')
+                the_pusher[DEBUG_CHANNEL].trigger('clear_debug')
             tile = board.get(coordinate).tile
             possible_words = self.lookup.find_words_using([tile.letter] + letters, 0)
 

@@ -27,8 +27,8 @@ def game(request):
             word_lookup = WordLookup()
             setup_game_state(word_lookup, post_params['player1_name'], post_params['player2_name'])
 
-            for player in Game.instance.players:
-                apply_setup_values(word_lookup, player, 0, 0)
+            apply_setup_values(word_lookup, Game.instance.players[0], 1, 0)
+            apply_setup_values(word_lookup, Game.instance.players[1], 2, 0)
 
             request.session['game'] = Game.instance
         else:

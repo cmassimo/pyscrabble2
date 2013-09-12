@@ -1,34 +1,29 @@
-﻿from support import Move
-# default utility function, just score the move
-# let MaximumScore(tiles:TileList, move) = System.Convert.ToDouble(Move(move).Score)
+﻿from support import Move, Game
+
+from copy import deepcopy
 
 def maximum_score(tiles, move):
     return float(Move(move).score())
 
-# def save_common(tiles, move):
-  
+def save_common(tiles, move):
+    ts = deepcopy(tiles)
 
-# // increase 'score' of words that leave common letters left over
-# // since we'll then have a better chance at a 7-letter word
-# let SaveCommon(tiles:TileList, move:Map<Config.Coordinate, Tile>) = 
-#     let t:Tile[] = 
-#         [for tile in tiles do yield tile] |> Seq.toArray
+    print ts
 
-#     let list = System.Collections.Generic.List(t)
-#     for item in move do
-#         list.Remove(item.Value) |> ignore
+    print move
+    for _, tile in move.items():
+        print tile
+        ts.remove(tile)
 
-#     let mutable scale = 0
+    scale = 0
 
-#     for tile in list do
-#         match tile.Letter with
-#             // per english word frequencies, these are the 7 most common letters
-#             | 'E' | 'T' | 'A' | 'O' | 'I' | 'N' | 'S' -> scale <- scale + 5 //5 is arbitrary
-#             | _ -> ()
+    for tile in ts:
+        if tile.letter in ['E', 'A', 'I', 'O', 'N']:
+            scale += 5
 
-#     System.Convert.ToDouble(Move(move).Score + scale)
+    return float(Move(move).score() + scale)
 
-
+# ???
 # /// If an S is used, make the Move less desierable if we're not using it "properly"
 # /// An S can be used to make two words at once, and if the computer is not making > 1 word with the S, then we
 # /// subtract from the move's utility function.
@@ -53,36 +48,42 @@ def maximum_score(tiles, move):
 #     let scale = modifiers |> Seq.sum
 #     Convert.ToDouble(move.Score - scale)
 
-# /// This move adds in the fact that by using a bonus square, you're taking away potential points
-# /// from your opponents. This factors in that a Double Letter Score will on average give the opponent 1.9 points,
-# /// so when the computer uses a Double Letter Score, the utility function will be + 1.9.
-# let UseBonusSquares(tiles:TileList, letters: Map<Config.Coordinate, Tile>) = 
-#     let avgTileScore = 1.9 //The average tile in scrabble is worth ~1.9 something
-#     let avgWordScore = avgTileScore * 3.5 //We assume that the average Scrabble word has 3.5 letters in it.
+def use_bonus_squares(tiles, letters):
+    avg_tile_score = 1.9
+    avg_word_score = avg_tile_score * 3.5
 
-#     let b = Game.Instance.PlayingBoard
-#     let squares = letters |> Seq.map (fun kv -> b.Get(kv.Key))
-#     let wordMult = squares |> Seq.map (fun s -> s.WordMultiplier) |> Seq.reduce (fun a b -> a * b)
-    
-#     let bonusList = letters |> Seq.map (fun kv -> 
-#         let s = b.Get(kv.Key)
-#         if s.LetterMultiplier > 1 then
-#             avgTileScore * (Convert.ToDouble(s.LetterMultiplier) - 1.0)
-#         else
-#             0.0
-#     )
-#     let letterBonus = bonusList |> Seq.sum
-#     let wordBonus = Convert.ToDouble(wordMult - 1) * avgWordScore
+    board = Game.instance.playing_board
+    squares = [board.get(c) for c,t in letters.items()]
+    word_mult = reduce(lambda x, lm: x*lm, [s.word_multiplier for s in squares], 1)
 
-#     let move = Move(letters)
-#     let baseScore = Convert.ToDouble(move.Score)
-#     baseScore + letterBonus + wordBonus
+    bonus_list = []
 
-# let OnlyPlayOver5(tiles:TileList, move: Map<Config.Coordinate, Tile>) = 
-#     if move.Count <= 5 then 0.0 else System.Convert.ToDouble(Move(move).Score)
+    for c, t in letters.items():
+        s = board.get(c)
+        if s.letter_multiplier > 1:
+            bonus_list.append(avg_tile_score * (s.letter_multiplier - 1))
 
-# let OnlyPlay7s(tiles:TileList, move: Map<Config.Coordinate, Tile>) = 
-#     if move.Count < 7 then 0.0 else System.Convert.ToDouble(Move(move).Score)
+    letter_bonus = sum(bonus_list)
+    word_bonus = (word_mult - 1) * avg_word_score
+
+    move = Move(letters)
+    base_score = move.score()
+
+    return float(base_score + letter_bonus + word_bonus)
+
+def only_play_over5(tiles, move):
+    if len(move) > 5:
+        return float(Move(move).score())
+    else:
+        return 0.0
+
+def only_play_7s(tiles, move):
+    if len(move) >= 7:
+        return float(Move(move).score())
+    else:
+        return 0.0
+
+# manca smart_s_moves().
 
 # //combine two for the best of both worlds
 # let SmartSMovesSaveCommon(tiles:TileList, move:Map<Config.Coordinate, Tile>) = 

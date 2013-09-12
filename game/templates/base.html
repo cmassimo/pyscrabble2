@@ -41,6 +41,6 @@
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
     <script src="http://js.pusher.com/2.1/pusher.min.js"></script>
     <script src="{% static 'custom.js' %}"></script>
-    <script src="{% static 'events.js' %}"></script>
+    {% block moar_js %}{% endblock %}
   </body>
 </html>

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load staticfiles %}
 
 {% block pagetitle %} Home {% endblock %}
 
@@ -54,3 +55,9 @@
   <br/>
 
 {% endblock %}
+
+{% block moar_js %}
+
+  <script src="{% static 'events.js' %}"></script>
+{% endblock %}
+

@@ -1,6 +1,6 @@
 from support import Move, PlaceMove, Pass, Game, Tile
 from word_lookup import WordLookup
-from config import Coordinate, Orientation, the_pusher, DEBUG, DEBUG_CHANNEL
+from config import Coordinate, Orientation, the_pusher, GameConfig
 
 from random import shuffle
 from copy import deepcopy
@@ -93,8 +93,8 @@ class HillClimbingMoveGenerator(object):
                 move = Move(dict(coords_letters))
                 if move.is_valid:
                     vmoves.append(move)
-                    if DEBUG:
-                        the_pusher[DEBUG_CHANNEL].trigger('debug', [{'x': c.x, 'y': c.y, 'tile': {'letter': t.letter, 'score': t.score}} for c, t in move.letters.items()])
+                    if GameConfig.debug:
+                        the_pusher[GameConfig.debug_channel].trigger('debug', [{'x': c.x, 'y': c.y, 'tile': {'letter': t.letter, 'score': t.score}} for c, t in move.letters.items()])
 
         return vmoves
 
@@ -116,8 +116,8 @@ class HillClimbingMoveGenerator(object):
             last_square = random_squares[-1]
 
             for coordinate in random_squares:
-                if DEBUG:
-                    the_pusher[DEBUG_CHANNEL].trigger('clear_debug')
+                if GameConfig.debug:
+                    the_pusher[GameConfig.debug_channel].trigger('clear_debug')
                 if not stop:
                     tile = board.get(coordinate[0]).tile
                     possible_words = self.lookup.find_words_using([tile.letter] + letters, 0)

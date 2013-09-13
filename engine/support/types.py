@@ -4,7 +4,7 @@ import hashlib
 import datetime
 
 from exceptions import *
-from config import ScrabbleConfig, Coordinate, Orientation, the_pusher, DEBUG, MAX_MOVES
+from config import ScrabbleConfig, Coordinate, Orientation, the_pusher, GameConfig
 from word_lookup import WordLookup
 
 class ObjEncoder(json.JSONEncoder):
@@ -389,7 +389,7 @@ class GameState(object):
     def is_game_complete(self):
         return (any([not p.has_tiles() for p in self.players]) or
             (self.pass_count == len(self.players)*2)  or
-            ((not self._bag.is_empty) and self.pass_count == len(self.players))) or (DEBUG and self._move_count >= MAX_MOVES)
+            ((not self._bag.is_empty) and self.pass_count == len(self.players))) or (GameConfig.debug and self._move_count >= GameConfig.max_moves)
 
     def finalize_scores(self):
         for player in self.players:

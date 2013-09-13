@@ -1,4 +1,4 @@
-from config import WORDLIST_PATH
+from config import GameConfig
 from combination_generator import CombinationGenerator
 
 class WordLookup(object):
@@ -6,7 +6,7 @@ class WordLookup(object):
         self.valid_words = set()
         self.official_words = dict()
 
-        with open(WORDLIST_PATH, 'r') as f:
+        with open(GameConfig.wordlist_path, 'r') as f:
 
             for word in f.readlines():
                 stripped = word.rstrip().lower()

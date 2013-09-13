@@ -2,14 +2,14 @@
 from support import GameState, Game, ComputerPlayer 
 from move_generator import MoveGenerator
 from hill_climbing_move_generator import HillClimbingMoveGenerator
-from config import DEBUG_CHANNEL
+from config import GameConfig
 
 def setup_game_state(word_lookup, name1, name2):
     Game.instance = GameState(word_lookup, [
         ComputerPlayer(name1),
         ComputerPlayer(name2)
         ])
-    DEBUG_CHANNEL = Game.instance.players[0].channel
+    GameConfig.debug_channel = Game.instance.players[0].channel
 
 def apply_setup_values(word_lookup, player, provider_code, utility_code):
   if provider_code == 0:

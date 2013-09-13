@@ -1,17 +1,9 @@
-﻿from exceptions import *
-import os
+﻿import os
 
 from pusher import Pusher
 
 from squares import *
-
-#en
-# WORDLIST_PATH = os.path.dirname(os.path.abspath(__file__)) + "/../twl.txt"
-#it
-WORDLIST_PATH = os.path.dirname(os.path.abspath(__file__)) + "/../abc.sort.txt"
-DEBUG = False
-MAX_MOVES = 6
-DEBUG_CHANNEL = ''
+from exceptions import *
 
 the_pusher = Pusher(
     app_id='53591',
@@ -52,6 +44,21 @@ class Coordinate(object):
             nb.append(Coordinate(self.x, self.y + 1))
 
         return nb
+
+    # def oriented_neighbors(self, o):
+    #     nb = []
+    #     if o == Orientation.horizontal:
+    #         if self.valid_xy(self.x - 1):
+    #             nb.append(Coordinate(self.x - 1, self.y))
+    #         if self.valid_xy(self.x + 1):
+    #             nb.append(Coordinate(self.x + 1, self.y))
+    #     else:
+    #         if self.valid_xy(self.y - 1):
+    #             nb.append(Coordinate(self.x, self.y - 1))
+    #         if self.valid_xy(self.y + 1):
+    #             nb.append(Coordinate(self.x, self.y + 1))
+
+    #     return nb
 
     def is_valid(self):
         return self.valid_xy(self.x) and self.valid_xy(self.y)
@@ -148,3 +155,12 @@ class ScrabbleConfig(object):
             return StartSquare()
         else:
             return NormalSquare()
+
+class GameConfig(object):
+    #en
+    # WORDLIST_PATH = os.path.dirname(os.path.abspath(__file__)) + "/../twl.txt"
+    #it
+    wordlist_path = os.path.dirname(os.path.abspath(__file__)) + "/../abc.sort.txt"
+    debug = True
+    max_moves = 6
+    debug_channel = ''

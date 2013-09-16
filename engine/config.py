@@ -161,6 +161,6 @@ class GameConfig(object):
     # WORDLIST_PATH = os.path.dirname(os.path.abspath(__file__)) + "/../twl.txt"
     #it
     wordlist_path = os.path.dirname(os.path.abspath(__file__)) + "/../abc.sort.txt"
-    debug = True
+    debug = False
     max_moves = 6
     debug_channel = ''

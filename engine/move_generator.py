@@ -90,7 +90,7 @@ class MoveGenerator(object):
                 if not board.has_tile(coord):
                     coords_letters.append( (coord, Tile(word.upper()[i])) )
 
-            print coords_letters
+            # print coords_letters
             if coords_letters:
                 move = Move(dict(coords_letters))
                 if move.is_valid:

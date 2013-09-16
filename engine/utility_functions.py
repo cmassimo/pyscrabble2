@@ -2,17 +2,18 @@
 
 from copy import deepcopy
 
-def maximum_score(tiles, move):
-    return float(Move(move).score())
+def maximum_score(tiles, move, state =Game.instance):
+    return float(Move(move, state).score())
 
-def save_common(tiles, move):
+def save_common(tiles, move, state =Game.instance):
     ts = deepcopy(tiles)
 
-    print ts
+    # print ts
 
     print move
     for _, tile in move.items():
-        print tile
+        # print tile
+        # XXX a volte crasha perche` tile non e` in ts
         ts.remove(tile)
 
     scale = 0
@@ -21,7 +22,7 @@ def save_common(tiles, move):
         if tile.letter in ['E', 'A', 'I', 'O', 'N']:
             scale += 5
 
-    return float(Move(move).score() + scale)
+    return float(Move(move, state).score() + scale)
 
 # ???
 # /// If an S is used, make the Move less desierable if we're not using it "properly"
@@ -48,7 +49,7 @@ def save_common(tiles, move):
 #     let scale = modifiers |> Seq.sum
 #     Convert.ToDouble(move.Score - scale)
 
-def use_bonus_squares(tiles, letters):
+def use_bonus_squares(tiles, letters, state =Game.instance):
     avg_tile_score = 1.9
     avg_word_score = avg_tile_score * 3.5
 
@@ -66,20 +67,20 @@ def use_bonus_squares(tiles, letters):
     letter_bonus = sum(bonus_list)
     word_bonus = (word_mult - 1) * avg_word_score
 
-    move = Move(letters)
+    move = Move(letters, state)
     base_score = move.score()
 
     return float(base_score + letter_bonus + word_bonus)
 
-def only_play_over5(tiles, move):
+def only_play_over5(tiles, move, state =Game.instance):
     if len(move) > 5:
-        return float(Move(move).score())
+        return float(Move(move, state).score())
     else:
         return 0.0
 
-def only_play_7s(tiles, move):
+def only_play_7s(tiles, move, state =Game.instance):
     if len(move) >= 7:
-        return float(Move(move).score())
+        return float(Move(move, state).score())
     else:
         return 0.0
 

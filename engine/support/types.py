@@ -94,7 +94,7 @@ class TileList(list):
             if el:
                 self.remove(el)
             else:
-                raise (Exception(String.Format("Cannot remove tile '%c', it is not in the collection." % t.letter)))
+                raise Exception("Cannot remove tile '%c', it is not in the collection." % t.letter)
 
     def shuffle(self):
         shuffle(self)
@@ -189,12 +189,13 @@ class PlaceMove(Turn):
 
 
 class Player(object):
-    def __init__(self, name):
+    def __init__(self, name, web =True):
         self.name = name
         # str((datetime.datetime.now()-datetime.datetime(1970,1,1)).total_seconds())
         self.pid = hashlib.md5(name + str(datetime.datetime.now())).hexdigest()[0:6]
         self.tiles = TileList()
         self.score = 0
+        self.web = web
 
     def notify_turn(self, game_state):
         raise NotImplementedError( "abstract method called: needs implementation" )
@@ -236,8 +237,8 @@ class GameOutcome(object):
         return {'winners': [w.summary() for w in self.winners], 'all_players': [a.summary() for a in self.all_updated_players]}
 
 class ComputerPlayer(Player):
-    def __init__(self, name):
-        super(ComputerPlayer, self).__init__(name)
+    def __init__(self, name, web =True):
+        super(ComputerPlayer, self).__init__(name, web)
         self.passes = 0
         self.channel = 'computer_' + str(self.pid)
 
@@ -277,19 +278,31 @@ class ComputerPlayer(Player):
 
     def notify_game_over(self, go):
         data = {'game_outcome': go.summary()}
-        the_pusher[self.channel].trigger('game_over', data)
-        # print "********************************* game_over: %s" % go.summary()
+        if self.web:
+            the_pusher[self.channel].trigger('game_over', data)
+        else:
+            if go.winners:
+                return (go.winners[0].provider.__class__.__name__, go.winners[0].utility.__name__)
+            else:
+                return ("", "")
+            # print "********************************* game_over: %s" % go.summary()
 
     def draw_turn(self, turn, player, s):
         data = {'player': player.summary(), 'string': s}
         if type(turn) == PlaceMove:
             data['move'] = [{'x': c.x, 'y': c.y, 'tile': {'letter': t.letter, 'score': t.score}} for c, t in turn.letters.items()]
-        the_pusher[self.channel].trigger('draw_turn', data)
-        # print "********************************* draw_turn: %s self.passes: %2i" % (s, self.passes)
+        if self.web:
+            the_pusher[self.channel].trigger('draw_turn', data)
+        else:
+            pass
+            # print "********************************* draw_turn: %s self.passes: %2i" % (s, self.passes)
 
     def tiles_updated(self):
-        the_pusher[self.channel].trigger('tiles_updated')
-        # print "********************************* tiles_updated: %2i" % self.passes
+        if self.web:
+            the_pusher[self.channel].trigger('tiles_updated')
+        else:
+            pass
+            # print "********************************* tiles_updated: %2i" % self.passes
 
 class HumanPlayer(Player):
     def __init__(self, name):
@@ -544,22 +557,26 @@ class Game(object):
     and if there is a "run" of connected tiles that doesn't form a valid word
 """
 class Move(object):
-    def __init__(self, letters):
+    def __init__(self, letters, state =None):
         self.letters = letters # [<coord, tile>, ...]
 
         self.sorted = sorted([(c, t) for c, t in self.letters.items()], key=lambda (c,t): c)
         self.first = self.sorted[0][0]
         self.last = self.sorted[-1][0]
         self._score = None
+        if state:
+            self._state = state
+        else:
+            self._state = Game.instance
 
 
     def check_board_prev(self, coord, orientation):
         prev = coord.prev(orientation)
-        return prev.is_valid() and Game.instance.playing_board.has_tile(prev)
+        return prev.is_valid() and self._state.playing_board.has_tile(prev)
 
     def check_board_next(self, coord, orientation):
         next = coord.next(orientation)
-        return next.is_valid() and Game.instance.playing_board.has_tile(next)
+        return next.is_valid() and self._state.playing_board.has_tile(next)
 
     def range(self):
         try:
@@ -579,10 +596,10 @@ class Move(object):
             return Orientation.horizontal
 
     def not_overwriting_tiles(self):
-        return not any([Game.instance.playing_board.has_tile(coord) for coord, _ in self.letters.items()])
+        return not any([self._state.playing_board.has_tile(coord) for coord, _ in self.letters.items()])
 
     def check_move_occupied(self, coord):
-        return (coord in self.letters.keys()) or Game.instance.playing_board.has_tile(coord)
+        return (coord in self.letters.keys()) or self._state.playing_board.has_tile(coord)
 
     def opposite(self, orientation):
         return (orientation + 1) % 2
@@ -600,15 +617,15 @@ class Move(object):
         return all([ self.check_move_occupied(c) for c in self.range() ])
 
     def is_connected(self):
-        return any([ Game.instance.playing_board.has_tile(c) or Game.instance.playing_board.has_neighbouring_tile(c) for c in self.range() ])
+        return any([ self._state.playing_board.has_tile(c) or self._state.playing_board.has_neighbouring_tile(c) for c in self.range() ])
 
     def contains_start_square(self):
         return ScrabbleConfig.start_coordinate() in self.letters.keys()
 
     def valid_placement(self):
         return (self.not_overwriting_tiles() and self.is_aligned() and self.is_consecutive() and
-            (Game.instance.is_opening_move and self.contains_start_square()) or
-            (not Game.instance.is_opening_move and self.is_connected()))
+            (self._state.is_opening_move and self.contains_start_square()) or
+            (not self._state.is_opening_move and self.is_connected()))
 
         # res = self.not_overwriting_tiles()
         # print res
@@ -627,10 +644,10 @@ class Move(object):
     def compute_runs(self):
         alt = self.opposite(self.orientation())
 
-        alternate_runs = [Run(c, alt, self.letters) for c, _ in self.sorted]
+        alternate_runs = [Run(c, alt, self.letters, self._state) for c, _ in self.sorted]
         alternate_runs = [a for a in alternate_runs if a.length() > 1]
 
-        return [Run(self.first, self.orientation(), self.letters)] + alternate_runs
+        return [Run(self.first, self.orientation(), self.letters, self._state)] + alternate_runs
 
     def valid_runs(self, runs):
         return all([r.is_valid() for r in runs])
@@ -674,22 +691,23 @@ class Move(object):
     __repr__ = __str__
 
 class Run(object):
-    def __init__(self, coord, orientation, move_letters):
+    def __init__(self, coord, orientation, move_letters, state):
         self.coordinate = coord
         self.orientation = orientation
         self.move_letters = move_letters
+        self._state = state
 
     def get_tile_from_move(self, coord):
         if coord in self.move_letters.keys():
             return self.move_letters[coord]
         else:
-            return Game.instance.playing_board.get(coord).tile
+            return self._state.playing_board.get(coord).tile
 
     def check(self, coord, orientation, increment):
         if not coord.is_valid():
             return []
         else:
-            square = Game.instance.playing_board.get(coord)
+            square = self._state.playing_board.get(coord)
             tile = self.get_tile_from_move(coord)
             if tile:
                 next = increment(coord, orientation)
@@ -713,7 +731,7 @@ class Run(object):
         return ''.join([t.letter for t in [t for _, t in self.squares()]])
 
     def is_valid(self):
-        return Game.instance.dictionary.is_valid_word(self.to_word())
+        return self._state.dictionary.is_valid_word(self.to_word())
 
     def score(self):
         word_mult = reduce(lambda x, y: x*y, [s.word_multiplier for s, _ in self.squares()], 1)

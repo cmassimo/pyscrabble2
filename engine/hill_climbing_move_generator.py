@@ -10,6 +10,8 @@ class HillClimbingMoveGenerator(object):
         self.lookup = lookup
         self.restart_tries = restart_tries
         self.restarts = 0
+        self.__class__.__name__ = "HillClimbingMoveGenerator(%2i)" % self.restart_tries
+
 
     def possible_starts(self, word, horizontal):
         highest_start = max(0, (7 - len(word) + 1))

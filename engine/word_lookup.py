@@ -49,6 +49,7 @@ class WordLookup(object):
 
             while generator.has_next():
                 indices = generator.get_next()
+
                 word = []
 
                 for j in range(0, len(indices)):

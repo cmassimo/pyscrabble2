@@ -2,10 +2,10 @@
 
 from copy import deepcopy
 
-def maximum_score(tiles, move, state =Game.instance):
+def maximum_score(tiles, move, state):
     return float(Move(move, state).score())
 
-def save_common(tiles, move, state =Game.instance):
+def save_common(tiles, move, state):
     ts = deepcopy(tiles)
 
     # print ts
@@ -49,11 +49,11 @@ def save_common(tiles, move, state =Game.instance):
 #     let scale = modifiers |> Seq.sum
 #     Convert.ToDouble(move.Score - scale)
 
-def use_bonus_squares(tiles, letters, state =Game.instance):
+def use_bonus_squares(tiles, letters, state):
     avg_tile_score = 1.9
     avg_word_score = avg_tile_score * 3.5
 
-    board = Game.instance.playing_board
+    board = state.playing_board
     squares = [board.get(c) for c,t in letters.items()]
     word_mult = reduce(lambda x, lm: x*lm, [s.word_multiplier for s in squares], 1)
 
@@ -72,13 +72,13 @@ def use_bonus_squares(tiles, letters, state =Game.instance):
 
     return float(base_score + letter_bonus + word_bonus)
 
-def only_play_over5(tiles, move, state =Game.instance):
+def only_play_over5(tiles, move, state):
     if len(move) > 5:
         return float(Move(move, state).score())
     else:
         return 0.0
 
-def only_play_7s(tiles, move, state =Game.instance):
+def only_play_7s(tiles, move, state):
     if len(move) >= 7:
         return float(Move(move, state).score())
     else:

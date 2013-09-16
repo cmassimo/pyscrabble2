@@ -6,11 +6,12 @@ from random import shuffle
 from copy import deepcopy
 
 class HillClimbingMoveGenerator(object):
-    def __init__(self, lookup, restart_tries =1):
+    def __init__(self, state, lookup, restart_tries =1):
         self.lookup = lookup
         self.restart_tries = restart_tries
         self.restarts = 0
         self.__class__.__name__ = "HillClimbingMoveGenerator(%2i)" % self.restart_tries
+        self.state = state
 
 
     def possible_starts(self, word, horizontal):
@@ -51,8 +52,8 @@ class HillClimbingMoveGenerator(object):
                     for start in self.possible_starts(word, o):
                         if not stop:
                             lts = [ ( start.next(o, i), Tile(word.upper()[i]) ) for i in range(0, len(word)) ]
-                            move = Move(dict(lts))
-                            score = utility_mapper(tiles_in_hand, move.letters)
+                            move = Move(dict(lts), self.state)
+                            score = utility_mapper(tiles_in_hand, move.letters, self.state)
                             if score > current_score:
                                 current_score = score
                                 current_move = move
@@ -68,8 +69,7 @@ class HillClimbingMoveGenerator(object):
         else:
             return Pass()
 
-    @staticmethod
-    def valid_moves(c, word, o, board):
+    def valid_moves(self, c, word, o, board):
         letter = board.get(c).tile.letter
 
         unchecked_starts = []
@@ -92,7 +92,7 @@ class HillClimbingMoveGenerator(object):
                     coords_letters.append( (coord, Tile(word.upper()[i])) )
 
             if coords_letters:
-                move = Move(dict(coords_letters))
+                move = Move(dict(coords_letters), self.state)
                 if move.is_valid:
                     vmoves.append(move)
                     if GameConfig.debug:
@@ -140,7 +140,7 @@ class HillClimbingMoveGenerator(object):
                                             self.restarts -= 1
                                         for move in moves:
                                             if not stop:
-                                                score = utility_mapper(tiles_in_hand, move.letters)
+                                                score = utility_mapper(tiles_in_hand, move.letters, self.state)
                                                 if score > current_score:
                                                     current_score = score
                                                     current_move = move
@@ -158,7 +158,8 @@ class HillClimbingMoveGenerator(object):
 
     def think(self, tiles_in_hand, utility_mapper):
         self.restarts = self.restart_tries
-        board = Game.instance.playing_board
+        # Game.instance
+        board = self.state.playing_board
         if board.occupied_squares():
             return self.calculate_best_move(tiles_in_hand, board, utility_mapper)
         else:

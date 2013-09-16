@@ -6,11 +6,12 @@ from copy import deepcopy
 
 
 class Minimax(object):
-    def __init__(self, word_lookup, depth =2):
+    def __init__(self, state, word_lookup, depth =2):
         self.lookup = word_lookup
         self.max_depth = depth
         self.moves_score = {}
         self.moves = []
+        self.state = state
 
     @staticmethod
     def utility_state(state):
@@ -207,15 +208,6 @@ class Minimax(object):
         fm = sorted([move for move in moves if utility_mapper(tiles_in_hand, move.letters, state) > 0.0], key=lambda i: -utility_mapper(tiles_in_hand, i.letters, state))
         return fm[0:3]
 
-        # positive_scores = [move for move in moves if utility_mapper(tiles_in_hand, move.letters) > 0.0]
-        # if positive_scores:
-        #     to_be_played = max(positive_scores, key=lambda ps: utility_mapper(tiles_in_hand, ps.letters))
-        #     if GameConfig.debug:
-        #         print to_be_played
-        #     return PlaceMove(to_be_played.letters)
-        # else:
-        #     return Pass()
-
     @staticmethod
     def valid_moves(c, word, o, board, state):
         letter = board.get(c).tile.letter
@@ -279,16 +271,7 @@ class Minimax(object):
 
         nps = sorted([move for move in moves if utility_mapper(tiles_in_hand, move.letters, state) > 0.0], key=lambda i: -utility_mapper(tiles_in_hand, i.letters, state))
         return nps[0:3]
-        # positive_scores = [move for move in moves if utility_mapper(tiles_in_hand, move.letters) > 0.0]
-
-        # if positive_scores:
-        #     to_be_played = max(positive_scores, key=lambda ps: utility_mapper(tiles_in_hand, ps.letters))
-        #     if DEBUG:
-        #         print to_be_played
-        #     return PlaceMove(to_be_played.letters)
-        # else:
-        #     return Pass()
 
     def think(self, tiles_in_hand, utility_mapper):
         # print "tile bag len: %2i" % len(Game.instance.tile_bag.inventory)
-        return self.alpha_beta_search(tiles_in_hand, Game.instance, utility_mapper)
+        return self.alpha_beta_search(tiles_in_hand, self.state, utility_mapper)

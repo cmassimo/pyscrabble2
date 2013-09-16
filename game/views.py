@@ -25,14 +25,14 @@ def game(request):
 
         if request.session['game'] == None:
             word_lookup = WordLookup()
-            setup_game_state(word_lookup, post_params['player1_name'], post_params['player2_name'])
+            state = setup_game_state(word_lookup, post_params['player1_name'], post_params['player2_name'])
 
-            apply_setup_values(word_lookup, Game.instance.players[0], 3, 0)
-            apply_setup_values(word_lookup, Game.instance.players[1], 0, 0)
+            apply_setup_values(state, word_lookup, state.players[0], 0, 0)
+            apply_setup_values(state, word_lookup, state.players[1], 0, 0)
 
-            request.session['game'] = Game.instance
+            request.session['game'] = state
         else:
-            Game.instance = request.session['game']
+            state = request.session['game']
 
         length = ScrabbleConfig.board_length
         css_grid = [ [ ScrabbleConfig.board_layout( Coordinate(i, j) ) for j in xrange(0, length) ] for i in xrange(0, length) ]
@@ -58,10 +58,10 @@ def game(request):
 #     return HttpResponse(json.dumps(auth), mimetype="application/json")
 
 def continue_game(request):
-    Game.instance = request.session['game']
+    state = request.session['game']
 
-    if Game.instance:
-        Process(target=go, args=(Game.instance,)).start()
+    if state:
+        Process(target=go, args=(state,)).start()
         return HttpResponse(json.dumps(True), mimetype="application/json")
     else:
         raise Http404

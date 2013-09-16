@@ -259,7 +259,7 @@ class ComputerPlayer(Player):
         self.utility = func
 
     def notify_turn(self, implementor):
-        self.invoke_turn(implementor)
+        return self.invoke_turn(implementor)
 
     def invoke_turn(self, implementor):
         turn = self.provider.think(self.tiles, self.utility)
@@ -274,7 +274,7 @@ class ComputerPlayer(Player):
             self.passes = 0
             self.take_turn(implementor, DumpLetters(self.tiles))
         else:
-            self.take_turn(implementor, turn)
+            return self.take_turn(implementor, turn)
 
     def notify_game_over(self, go):
         data = {'game_outcome': go.summary()}
@@ -421,8 +421,10 @@ class GameState(object):
     def finish_game(self):
         self.finalize_scores()
         go = GameOutcome(self.winning_players(), self.players)
-        for p in self.players:
-            p.notify_game_over(go)
+        winners = self.winning_players()
+        # for p in self.players:
+        if winners:
+            return winners[0].notify_game_over(go)
 
     class TurnImplementor:
         def __init__(self, game_state):
@@ -445,10 +447,10 @@ class GameState(object):
 
         def perform_move(self, turn):
             self.gs.pass_count = 0
-            move = Move(turn.letters)
+            move = Move(turn.letters, self.gs)
 
             if not move.is_valid:
-                raise (InvalidMoveException("Move violates position requirements or forms one or more invalid words."))
+                raise InvalidMoveException("Move violates position requirements or forms one or more invalid words.")
 
             self.gs.playing_board.put(move)
             self.gs.current_player.add_score(move.score())
@@ -470,7 +472,7 @@ class GameState(object):
 
                 self.gs.next_move()
             else:
-                self.gs.finish_game()
+                return self.gs.finish_game()
 
     @property
     def tile_bag(self):
@@ -533,11 +535,11 @@ class GameState(object):
             player.tiles.extend(self._bag.take(ScrabbleConfig.max_tiles))
             player.tiles_updated()
 
-        self.current_player.notify_turn(self.TurnImplementor(self))
+        return self.current_player.notify_turn(self.TurnImplementor(self))
 
     def continue_game(self):
         if not self.running:
-            self.start()
+            return self.start()
         elif self.current_player.is_human:
             self.current_player.notify_turn(self.TurnImplementor(self))
 
@@ -550,24 +552,20 @@ class Game(object):
     # def instance(cls):
     #     cls.loader.load()
 
-
 """
     A player's move is a set of coordinates and tiles. This will throw if the move isn't valid.
     That is, if the tiles aren't layed out properly (not all connected, the word formed doesn't "touch" any other tiles - with the exception of the first word)
     and if there is a "run" of connected tiles that doesn't form a valid word
 """
 class Move(object):
-    def __init__(self, letters, state =None):
+    def __init__(self, letters, state):
         self.letters = letters # [<coord, tile>, ...]
 
         self.sorted = sorted([(c, t) for c, t in self.letters.items()], key=lambda (c,t): c)
         self.first = self.sorted[0][0]
         self.last = self.sorted[-1][0]
         self._score = None
-        if state:
-            self._state = state
-        else:
-            self._state = Game.instance
+        self._state = state
 
 
     def check_board_prev(self, coord, orientation):

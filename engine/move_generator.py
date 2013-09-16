@@ -3,8 +3,9 @@ from word_lookup import WordLookup
 from config import Coordinate, Orientation, the_pusher, GameConfig
 
 class MoveGenerator(object):
-    def __init__(self, word_lookup):
+    def __init__(self, state, word_lookup):
         self.lookup = word_lookup
+        self.state = state
 
     def possible_starts(self, word, horizontal):
         highest_start = max(0, (7 - len(word) + 1))
@@ -29,20 +30,19 @@ class MoveGenerator(object):
         for o in horizontal:
             for word in possible_words:
                 for start in self.possible_starts(word, o):
-                    moves.append( Move( dict( [ (start.next(o, i), Tile(word.upper()[i])) for i in xrange(0, len(word)) ] ) ) )
+                    moves.append( Move( dict( [ (start.next(o, i), Tile(word.upper()[i])) for i in xrange(0, len(word)) ] ), self.state ) )
 
-        positive_scores = [move for move in moves if utility_mapper(tiles_in_hand, move.letters) > 0.0]
+        positive_scores = [move for move in moves if utility_mapper(tiles_in_hand, move.letters, self.state) > 0.0]
 
         if positive_scores:
-            to_be_played = max(positive_scores, key=lambda ps: utility_mapper(tiles_in_hand, ps.letters))
+            to_be_played = max(positive_scores, key=lambda ps: utility_mapper(tiles_in_hand, ps.letters, self.state))
             if GameConfig.debug:
                 print to_be_played
             return PlaceMove(to_be_played.letters)
         else:
             return Pass()
 
-    @staticmethod
-    def valid_moves(c, word, o, board):
+    def valid_moves(self, c, word, o, board):
         square = board.get(c)
         tile = square.tile
         letter = tile.letter
@@ -92,7 +92,7 @@ class MoveGenerator(object):
 
             # print coords_letters
             if coords_letters:
-                move = Move(dict(coords_letters))
+                move = Move(dict(coords_letters), self.state)
                 if move.is_valid:
                     vmoves.append(move)
                     if GameConfig.debug:
@@ -121,10 +121,10 @@ class MoveGenerator(object):
                     for move in self.valid_moves(coordinate, word, orientation, board):
                         moves.append(move)
 
-        positive_scores = [move for move in moves if utility_mapper(tiles_in_hand, move.letters) > 0.0]
+        positive_scores = [move for move in moves if utility_mapper(tiles_in_hand, move.letters, self.state) > 0.0]
 
         if positive_scores:
-            to_be_played = max(positive_scores, key=lambda ps: utility_mapper(tiles_in_hand, ps.letters))
+            to_be_played = max(positive_scores, key=lambda ps: utility_mapper(tiles_in_hand, ps.letters, self.state))
             if GameConfig.debug:
                 print to_be_played
             return PlaceMove(to_be_played.letters)
@@ -132,7 +132,8 @@ class MoveGenerator(object):
             return Pass()
 
     def think(self, tiles_in_hand, utility_mapper):
-        board = Game.instance.playing_board
+        # Game.instance
+        board = self.state.playing_board
         if board.occupied_squares():
             return self.calculate_best_move(tiles_in_hand, board, utility_mapper)
         else:

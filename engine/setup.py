@@ -6,21 +6,23 @@ from minimax import Minimax
 from config import GameConfig
 
 def setup_game_state(word_lookup, name1, name2, web =True):
-    Game.instance = GameState(word_lookup, [
+    state = GameState(word_lookup, [
         ComputerPlayer(name1, web),
         ComputerPlayer(name2, web)
         ])
-    GameConfig.debug_channel = Game.instance.players[0].channel
+    GameConfig.debug_channel = state.players[0].channel
 
-def apply_setup_values(word_lookup, player, provider_code, utility_code):
+    return state
+
+def apply_setup_values(state, word_lookup, player, provider_code, utility_code):
   if provider_code == 0:
-    player.provider = MoveGenerator(word_lookup)
+    player.provider = MoveGenerator(state, word_lookup)
   elif provider_code == 1:
-    player.provider = HillClimbingMoveGenerator(word_lookup, 15)
+    player.provider = HillClimbingMoveGenerator(state, word_lookup, 15)
   elif provider_code == 2:
-    player.provider = HillClimbingMoveGenerator(word_lookup, 5)
+    player.provider = HillClimbingMoveGenerator(state, word_lookup, 5)
   elif provider_code == 3:
-    player.provider = Minimax(word_lookup)
+    player.provider = Minimax(state, word_lookup)
   else:
     raise Exception("Unknown move generator code.")
 

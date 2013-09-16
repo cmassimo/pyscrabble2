@@ -88,13 +88,16 @@ class TileList(list):
         list.__init__(self)
 
     def remove_many(self, tiles):
-        # TODO could be improved performance-wise
         for t in tiles:
-            el = next((x for x in self if x.letter == t.letter), None)
-            if el:
-                self.remove(el)
+            if t in self:
+                self.remove(t)
             else:
                 raise Exception("Cannot remove tile '%c', it is not in the collection." % t.letter)
+            # el = next((x for x in self if x.letter == t.letter), None)
+            # if el:
+            #     self.remove(el)
+            # else:
+            #     raise Exception("Cannot remove tile '%c', it is not in the collection." % t.letter)
 
     def shuffle(self):
         shuffle(self)
@@ -175,7 +178,7 @@ class Pass(Turn):
 
 class DumpLetters(Turn):
     def __init__(self, tiles):
-        self.letters = tiles
+        self.letters = [Tile(t.letter) for t in tiles]
 
     def perform(self, implementor):
         return implementor.perform_dump_letters(self)
@@ -220,7 +223,7 @@ class Player(object):
 
     @staticmethod
     def take_turn(implementor, turn):
-        implementor.take_turn(turn)
+        return implementor.take_turn(turn)
 
     def is_human(self):
         return False
@@ -272,7 +275,7 @@ class ComputerPlayer(Player):
         # auto-dump after 3 passes in a row, unless at the end of the game
         if self.passes > 3 and len(self.tiles) == ScrabbleConfig.max_tiles:
             self.passes = 0
-            self.take_turn(implementor, DumpLetters(self.tiles))
+            return self.take_turn(implementor, DumpLetters(self.tiles))
         else:
             return self.take_turn(implementor, turn)
 
@@ -423,8 +426,11 @@ class GameState(object):
         go = GameOutcome(self.winning_players(), self.players)
         winners = self.winning_players()
         # for p in self.players:
-        if winners:
-            return winners[0].notify_game_over(go)
+        # if winners:
+        #     return winners[0].notify_game_over(go)
+
+        return self.players[0].notify_game_over(go)
+
 
     class TurnImplementor:
         def __init__(self, game_state):
@@ -470,7 +476,7 @@ class GameState(object):
                 if self.gs.is_opening_move and not (type(turn) == PlaceMove):
                     self.gs.move_count -= 1
 
-                self.gs.next_move()
+                return self.gs.next_move()
             else:
                 return self.gs.finish_game()
 
@@ -516,7 +522,7 @@ class GameState(object):
         if self.current_player_index >= len(self.players):
             self.current_player_index = 0
 
-        self.current_player.notify_turn(self.TurnImplementor(self))
+        return self.current_player.notify_turn(self.TurnImplementor(self))
 
     def other_players(self):
         return [self.players[i] for i in range(0, len(self.players)) if i != self.current_player_index]

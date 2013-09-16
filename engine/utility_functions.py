@@ -6,14 +6,12 @@ def maximum_score(tiles, move, state):
     return float(Move(move, state).score())
 
 def save_common(tiles, move, state):
-    ts = deepcopy(tiles)
+    ts = [Tile(t.letter) for t in tiles]
 
     # print ts
 
-    print move
+    # print move
     for _, tile in move.items():
-        # print tile
-        # XXX a volte crasha perche` tile non e` in ts
         ts.remove(tile)
 
     scale = 0

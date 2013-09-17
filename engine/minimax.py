@@ -3,6 +3,7 @@ from word_lookup import WordLookup
 from config import Coordinate, Orientation, the_pusher, GameConfig, ScrabbleConfig
 
 from copy import deepcopy
+import time
 
 
 class Minimax(object):
@@ -24,20 +25,8 @@ class Minimax(object):
         if not move.is_valid:
             raise (InvalidMoveException("Move violates position requirements or forms one or more invalid words."))
 
-        # print '***'
-        # print state.current_player.name
-        # print [t.letter for t in state.current_player.tiles]
         state.playing_board.put(move)
-        # print "APPLY: %s" % state.current_player.name
-        # print [t.letter for t in state.current_player.tiles]
-        # print move
         state.current_player.add_score(move.score())
-        # print move.score()
-        # print '---'
-        # print [t.letter for t in state.current_player.tiles]
-        # print [l.letter for _, l in move.letters.items()]
-        # print state.current_player.name
-        # print '---'
         state.current_player.tiles.remove_many([l for _, l in move.letters.items()])
         state.give_tiles(state.current_player, len(move.letters))
 
@@ -234,18 +223,15 @@ class Minimax(object):
             if coords_letters:
                 move = Move(dict(coords_letters), state)
                 if move.is_valid:
-                    # print '---'
-                    # print [t.letter for c, t in coords_letters]
-                    # print [t.letter for c, t in move.letters.items()]
-                    # time.sleep(1)
                     vmoves.append(move)
                     if GameConfig.debug:
                         the_pusher[GameConfig.debug_channel].trigger('debug', [{'x': c.x, 'y': c.y, 'tile': {'letter': t.letter, 'score': t.score}} for c, t in move.letters.items()])
+                        time.sleep(1)
+                        the_pusher[GameConfig.debug_channel].trigger('clear_debug')
 
         return vmoves
 
     def next_possible_moves(self, tiles_in_hand, state, utility_mapper):
-        # print [t.letter for t in tiles_in_hand]
         letters = [tile.letter for tile in tiles_in_hand]
         orientations = Orientation.values()
         board = state.playing_board
@@ -257,8 +243,6 @@ class Minimax(object):
 
         moves = []
         for coordinate in board.occupied_squares().keys():
-            if GameConfig.debug:
-                the_pusher[GameConfig.debug_channel].trigger('clear_debug')
             tile = board.get(coordinate).tile
             # print letters
             possible_words = self.lookup.find_words_using([tile.letter] + letters, 0)

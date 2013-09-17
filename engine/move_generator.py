@@ -3,6 +3,7 @@ from word_lookup import WordLookup
 from config import Coordinate, Orientation, the_pusher, GameConfig
 
 from copy import deepcopy
+import time
 
 class MoveGenerator(object):
     def __init__(self, state, word_lookup):
@@ -102,9 +103,11 @@ class MoveGenerator(object):
                 move = Move(dict(coords_letters), self.state)
                 if move.is_valid:
                     vmoves.append(move)
-                else:
-                    if GameConfig.debug:
-                        the_pusher[GameConfig.debug_channel].trigger('debug', [{'x': c.x, 'y': c.y, 'tile': {'letter': t.letter, 'score': t.score}} for c, t in move.letters.items()])
+
+                if GameConfig.debug:
+                    the_pusher[GameConfig.debug_channel].trigger('debug', [{'x': c.x, 'y': c.y, 'tile': {'letter': t.letter, 'score': t.score}} for c, t in move.letters.items()])
+                    time.sleep(1)
+                    the_pusher[GameConfig.debug_channel].trigger('clear_debug')
 
         return vmoves
 
@@ -118,9 +121,7 @@ class MoveGenerator(object):
             print
 
         moves = []
-        for coordinate in board.occupied_squares().keys():
-            if GameConfig.debug:
-                the_pusher[GameConfig.debug_channel].trigger('clear_debug')
+        for coordinate in board.occupied_squares().keys():                
             tile = board.get(coordinate).tile
             possible_words = self.lookup.find_words_using([tile.letter] + letters, 0)
 

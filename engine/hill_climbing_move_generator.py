@@ -4,6 +4,7 @@ from config import Coordinate, Orientation, the_pusher, GameConfig
 
 from random import shuffle
 from copy import deepcopy
+import time
 
 class HillClimbingMoveGenerator(object):
     def __init__(self, state, lookup, restart_tries =1):
@@ -99,6 +100,8 @@ class HillClimbingMoveGenerator(object):
                     vmoves.append(move)
                     if GameConfig.debug:
                         the_pusher[GameConfig.debug_channel].trigger('debug', [{'x': c.x, 'y': c.y, 'tile': {'letter': t.letter, 'score': t.score}} for c, t in move.letters.items()])
+                        time.sleep(1)
+                        the_pusher[GameConfig.debug_channel].trigger('clear_debug')
 
         return vmoves
 
@@ -123,8 +126,6 @@ class HillClimbingMoveGenerator(object):
             last_square = random_squares[-1]
 
             for coordinate in random_squares:
-                if GameConfig.debug:
-                    the_pusher[GameConfig.debug_channel].trigger('clear_debug')
                 if not stop:
                     tile = board.get(coordinate[0]).tile
                     possible_words = self.lookup.find_words_using([tile.letter] + letters, 0)

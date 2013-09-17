@@ -310,7 +310,8 @@ class ComputerPlayer(Player):
 
     def tiles_updated(self):
         if self.web:
-            the_pusher[self.channel].trigger('tiles_updated')
+            data = {'tiles': [{'letter': t.letter, 'score': t.score} for t in self.tiles]}
+            the_pusher[self.channel].trigger('tiles_updated', data)
         else:
             pass
             # print "********************************* tiles_updated: %2i" % self.passes

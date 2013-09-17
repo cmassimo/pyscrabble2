@@ -107,6 +107,7 @@ $(function() {
   channel1.bind('tiles_updated', function(data) {
     console.log('ch1 tiles_updated');
     console.log(data);
+    update_rack(0, data.tiles);
   });
 
   channel2.bind('draw_turn', function(data) {
@@ -140,6 +141,7 @@ $(function() {
   channel2.bind('tiles_updated', function(data) {
     console.log('ch2 tiles_updated');
     console.log(data);
+    update_rack(1, data.tiles);
   });
 
 

@@ -54,15 +54,15 @@ with open('report.csv', 'wb') as csvfile:
     writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
     writer.writerow(["match #", "com1 strategy", "com2 strategy", "com1 utility", "com2 utility", "winning strategy", "winning utility", "seconds"])
 
-    for i in range(0,4):
-        for j in range(0,4):
-            for ui in range(0,5):
-                for uj in range(0,5):
+    for i in [0,1,3]:
+        for j in [0,1,3]:
+            for ui in [0,1,4]:
+                for uj in [0,1,4]:
                     print i, ui, j, uj
                     threads = []
                     q = Queue()
 
-                    for n in range(0, 10):
+                    for n in range(0, 5):
                         t = GameThread(q, i, ui, j, uj, WordLookup(), n)
                         t.start()
                         threads.append(t)

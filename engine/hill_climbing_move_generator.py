@@ -10,7 +10,7 @@ class HillClimbingMoveGenerator(object):
         self.lookup = lookup
         self.restart_tries = restart_tries
         self.restarts = 0
-        self.__class__.__name__ = "HillClimbingMoveGenerator(%2i)" % self.restart_tries
+        # self.__class__.__name__ = ("HillClimbingMoveGenerator(%2i)" % self.restart_tries)
         self.state = state
 
 
@@ -33,10 +33,12 @@ class HillClimbingMoveGenerator(object):
         best_score = 0.0
         best_move = None
 
-        print "calculate_first_move"
+        if GameConfig.debug:
+            print "calculate_first_move"
 
         while self.restarts > 0:
-            print "restarts to go: %i" % self.restarts
+            if GameConfig.debug:
+                print "restarts to go: %i" % self.restarts
             stop = False
             current_score = 0.0
             current_move = None
@@ -83,9 +85,9 @@ class HillClimbingMoveGenerator(object):
                         unchecked_starts.append( Coordinate(c.x, c.y - i) )
 
         vmoves = []
-        coords_letters = []
 
         for start in unchecked_starts:
+            coords_letters = []
             for i in range(0, len(word)):
                 coord = start.next(o, i)
                 if not board.has_tile(coord):
@@ -101,15 +103,18 @@ class HillClimbingMoveGenerator(object):
         return vmoves
 
     def calculate_best_move(self, tiles_in_hand, board, utility_mapper):
-        letters = [tile.letter for tile in tiles_in_hand]
+        letters = [deepcopy(tile.letter) for tile in tiles_in_hand]
         orientations = Orientation.values()
 
         best_score = 0.0
         best_move = None
 
-        print "calculate_best_move"
+        if GameConfig.debug:
+            print "calculate_best_move"
+
         while self.restarts > 0:
-            print "restarts to go: %i" % self.restarts
+            if GameConfig.debug:
+                print "restarts to go: %i" % self.restarts
             stop = False
             current_score = 0.0
             current_move = None

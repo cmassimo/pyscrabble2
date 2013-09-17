@@ -2,6 +2,8 @@ from support import Move, PlaceMove, Pass, Game, Tile, Run
 from word_lookup import WordLookup
 from config import Coordinate, Orientation, the_pusher, GameConfig
 
+from copy import deepcopy
+
 class MoveGenerator(object):
     def __init__(self, state, word_lookup):
         self.lookup = word_lookup
@@ -45,16 +47,19 @@ class MoveGenerator(object):
     def valid_moves(self, c, word, o, board):
         square = board.get(c)
         tile = square.tile
-        letter = tile.letter
+        letter = deepcopy(tile.letter)
+
+        # print "-------------------------------------------- word: %s" % word
+        # print "valid_moves, tile on board: %s" % letter
 
         unchecked_starts = []
         for i in range(0, len(word)):
             if word.upper()[i] == letter:
                 if o == Orientation.horizontal:
-                    if (c.x - i) >= 0 and (c.x + len(word) - i) <= 14:
+                    if (c.x - i) >= 0 and (c.x + len(word) - i - 1) <= 14:
                         unchecked_starts.append( Coordinate(c.x - i, c.y) )
                 else:
-                    if (c.y - i) >= 0 and (c.y + len(word) - i) <= 14:
+                    if (c.y - i) >= 0 and (c.y + len(word) - i - 1) <= 14:
                         unchecked_starts.append( Coordinate(c.x, c.y - i) )
 
         # XXX parallel moves WIP
@@ -83,25 +88,28 @@ class MoveGenerator(object):
         # end WIP
 
         vmoves = []
-        coords_letters = []
         for start in unchecked_starts:
+            coords_letters = []
             for i in range(0, len(word)):
                 coord = start.next(o, i)
                 if not board.has_tile(coord):
                     coords_letters.append( (coord, Tile(word.upper()[i])) )
+                # else:
+                    # print "skipped: %s" % word.upper()[i]
+                    
 
-            # print coords_letters
             if coords_letters:
                 move = Move(dict(coords_letters), self.state)
                 if move.is_valid:
                     vmoves.append(move)
+                else:
                     if GameConfig.debug:
                         the_pusher[GameConfig.debug_channel].trigger('debug', [{'x': c.x, 'y': c.y, 'tile': {'letter': t.letter, 'score': t.score}} for c, t in move.letters.items()])
 
         return vmoves
 
     def calculate_best_move(self, tiles_in_hand, board, utility_mapper):
-        letters = [tile.letter for tile in tiles_in_hand]
+        letters = [deepcopy(tile.letter) for tile in tiles_in_hand]
         orientations = Orientation.values()
 
         if GameConfig.debug:

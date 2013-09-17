@@ -6,16 +6,12 @@ sys.path.append('./engine')
 import csv
 import threading
 from multiprocessing import Queue
-from time import time
+# from time import time
 # from copy import deepcopy
 
 from word_lookup import WordLookup
 from config import ScrabbleConfig, Coordinate
 from setup import *
-
-wl = WordLookup()
-
-exitFlag = 0
 
 class GameThread (threading.Thread):
     def __init__(self, q, i, ui, j, uj, wl, n):
@@ -39,15 +35,20 @@ def do_game(q, i, ui, j, uj, wl, n):
     apply_setup_values(state, wl, state.players[1], j, uj)
 
     # try:
-    start = time()
+    # start = time()
 
     outcome = state.continue_game()
 
-    elapsed = time() - start
+    # elapsed = time() - start
 
-    q.put([ n, provider_code_mapping(i), provider_code_mapping(j), utility_code_mapping(ui), utility_code_mapping(uj), outcome[0], outcome[1], elapsed ])
+    q.put([ n, provider_code_mapping(i), provider_code_mapping(j), utility_code_mapping(ui), utility_code_mapping(uj), outcome[0], outcome[1] ])
     # except Exception as e:
         # print e.args
+
+# wl = WordLookup()
+
+# q = Queue()
+# do_game(q, 0, 3, 2, 0, WordLookup(), 0)
 
 with open('report.csv', 'wb') as csvfile:
     writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -57,11 +58,12 @@ with open('report.csv', 'wb') as csvfile:
         for j in range(0,4):
             for ui in range(0,5):
                 for uj in range(0,5):
+                    print i, ui, j, uj
                     threads = []
                     q = Queue()
 
                     for n in range(0, 10):
-                        t = GameThread(q, i, ui, j, uj, wl, n)
+                        t = GameThread(q, i, ui, j, uj, WordLookup(), n)
                         t.start()
                         threads.append(t)
 

@@ -5,8 +5,8 @@
 {% block content %} 
 
   <div class='row'>
-    <div class='span12'>
-      <div class='span8'>
+    <div class='col-md-12 col-sx-12'>
+      <div class='col-md-6 col-sx-11'>
 
         <table id="board">
 
@@ -23,7 +23,9 @@
         </table>
 
       </div>
-      <div class='span4'>
+      <div class='col-md-4'>
+      </div>
+      <div class='col-md-2'>
       </div>
     </div>
   </div>
@@ -37,43 +39,133 @@
         </div>
 
         <div class="modal-body">
-          <p>This is a Python porting of <a href='https://code.google.com/p/sharpscrabble/' target='_blank'>F# Scrabble</a><br> we did for the course of Artificial Intelligence.
-          <h2>Select players</h2>
+          <p>This is a Python porting of <a href='https://code.google.com/p/sharpscrabble/' target='_blank'>F# Scrabble</a><br> we did for the course of Artificial Intelligence.</br>
+            Notably a 3-level minimax (width and depth) with alpha-beta pruning has been added.
+          </p>
+
+          <h2>Configure players</h2>
           
           <form action='{% url 'game' %}' class="form-horizontal" role="form" id='new_game' method='post'>
             {% csrf_token %}
 
-            <div class="form-group">
-              <div class="btn-group" data-toggle="buttons">
-                <label class="btn btn-primary">
-                  <input type="radio" name="player1_type" id="player1_type" value='human'> Human
-                </label>
-                <label class="btn btn-primary">
-                  <input type="radio" name="player1_type" id="player1_type" value='computer'> Computer
-                </label>
-              </div>
-              <label for="player1_name" class="col-lg-2 control-label">Name</label>
-              <div class="col-lg-4">
-                <input type="text" class="form-control" id="player1_name" name="player1_name" placeholder="Name">
+            <div class='col-md-6 col-xs-6 conf'>
+              <h4>Com 1</h4>
+              <div class="form-group">
+                <h5>Strategies</h5>
+                <div class="btn-group" data-toggle="buttons">
+                  <label class="btn btn-primary">
+                    <input type="radio" name="strategy1" id="strategy1" value='0' checked > BF
+                  </label>
+                  <label class="btn btn-primary">
+                    <input type="radio" name="strategy1" id="strategy1" value='1'> HC5
+                  </label>
+                  <label class="btn btn-primary">
+                    <input type="radio" name="strategy1" id="strategy1" value='2'> HC15
+                  </label>
+                  <label class="btn btn-primary">
+                    <input type="radio" name="strategy1" id="strategy1" value='3'> MM
+                  </label>
+                </div>
+                <h5>Utility functions</h5>
+                <div class="btn-group" data-toggle="buttons">
+                  <label class="btn btn-primary">
+                    <input type="radio" name="utility1" id="utility1" value='0' checked > ms
+                  </label>
+                  <label class="btn btn-primary">
+                    <input type="radio" name="utility1" id="utility1" value='1'> sc
+                  </label>
+                  <label class="btn btn-primary">
+                    <input type="radio" name="utility1" id="utility1" value='2'> op7
+                  </label>
+                  <label class="btn btn-primary">
+                    <input type="radio" name="utility1" id="utility1" value='3'> opo5
+                  </label>
+                  <label class="btn btn-primary">
+                    <input type="radio" name="utility1" id="utility1" value='4'> ubs
+                  </label>
+                </div>
               </div>
             </div>
 
-            <div class="form-group">
-              <div class="btn-group" data-toggle="buttons">
-                <label class="btn btn-primary">
-                  <input type="radio" name="player2_type" id="player_type" value='human'> Human
-                </label>
-                <label class="btn btn-primary">
-                  <input type="radio" name="player2_type" id="player2_type" value='computer'> Computer
-                </label>
+            <div class='col-md-6 col-xs-6 conf'>
+              <h4>Com 2</h4>
+              <div class="form-group">
+                <h5>Strategies</h5>
+                <div class="btn-group" data-toggle="buttons">
+                  <label class="btn btn-primary">
+                    <input type="radio" name="strategy2" id="strategy2" value='0' checked> BF
+                  </label>
+                  <label class="btn btn-primary">
+                    <input type="radio" name="strategy2" id="strategy2" value='1'> HC5
+                  </label>
+                  <label class="btn btn-primary">
+                    <input type="radio" name="strategy2" id="strategy2" value='2'> HC15
+                  </label>
+                  <label class="btn btn-primary">
+                    <input type="radio" name="strategy2" id="strategy2" value='3'> MM
+                  </label>
+                </div>
               </div>
-              <label for="player2_name" class="col-lg-2 control-label">Name</label>
-              <div class="col-lg-4">
-                <input type="text" class="form-control" id="player2_name" name="player2_name" placeholder="Name">
+              <h5>Utility functions</h5>
+              <div class="form-group">
+                <div class="btn-group" data-toggle="buttons">
+                  <label class="btn btn-primary">
+                    <input type="radio" name="utility2" id="utility2" value='0' checked> ms
+                  </label>
+                  <label class="btn btn-primary">
+                    <input type="radio" name="utility2" id="utility2" value='1'> sc
+                  </label>
+                  <label class="btn btn-primary">
+                    <input type="radio" name="utility2" id="utility2" value='2'> op7
+                  </label>
+                  <label class="btn btn-primary">
+                    <input type="radio" name="utility2" id="utility2" value='3'> opo5
+                  </label>
+                  <label class="btn btn-primary">
+                    <input type="radio" name="utility2" id="utility2" value='4'> ubs
+                  </label>
+                </div>
               </div>
             </div>
+
+            <div class='conf'>
+              <div class="form-group">
+                <h5>Print debug?</h5>
+                <div class="btn-group" data-toggle="buttons">
+                  <label class="btn btn-primary">
+                    <input type="radio" name="debug" id="debug" value='true'> yes
+                  </label>
+                  <label class="btn btn-primary">
+                    <input type="radio" name="debug" id="debug" value='false' checked> no
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <h5>Legend</h5>
+            <dl class="dl-horizontal">
+              <dt>BF</dt>
+              <dd>brute force</dd>
+              <dt>HC5</dt>
+              <dd>hill climbing with 5 random restarts</dd>
+              <dt>HC15</dt>
+              <dd>hill climbing with 15 random restarts</dd>
+              <dt>MM</dt>
+              <dd>minimax 3-level deep and wide with brute force strategy</dd>
+              
+              <dt>ms</dt>
+              <dd>maximum score move</dd>
+              <dt>sc</dt>
+              <dd>save most common tiles</dd>
+              <dt>op7</dt>
+              <dd>only plays 7-letters long moves</dd>
+              <dt>opo5</dt>
+              <dd>only plays moves longer than 5</dd>
+              <dt>ubs</dt>
+              <dd>tries to maximize bonus squares usage</dd>
+            </dl>
             
-            <div class="form-group">
+            <div class="form-group conf">
               <div class="">
                 <button type="submit" class="btn btn-info">Go!</button>
               </div>
@@ -82,10 +174,10 @@
 
         </div>
 
-        <div class="modal-footer">
+        <!-- <div class="modal-footer"> -->
           <!-- <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
           <button type="button" class="btn btn-primary">Save changes</button> -->
-        </div>
+        <!-- </div> -->
 
       </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->

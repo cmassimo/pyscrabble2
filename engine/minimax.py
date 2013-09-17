@@ -223,9 +223,9 @@ class Minimax(object):
                         unchecked_starts.append( Coordinate(c.x, c.y - i) )
 
         vmoves = []
-        coords_letters = []
 
         for start in unchecked_starts:
+            coords_letters = []
             for i in range(0, len(word)):
                 coord = start.next(o, i)
                 if not board.has_tile(coord):

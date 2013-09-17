@@ -1,6 +1,4 @@
-﻿from support import Move, Game
-
-from copy import deepcopy
+﻿from support import Move, Game, Tile
 
 def maximum_score(tiles, move, state):
     return float(Move(move, state).score())
@@ -8,11 +6,9 @@ def maximum_score(tiles, move, state):
 def save_common(tiles, move, state):
     ts = [Tile(t.letter) for t in tiles]
 
-    # print ts
-
-    # print move
     for _, tile in move.items():
-        ts.remove(tile)
+        if tile in ts:
+            ts.remove(tile)
 
     scale = 0
 

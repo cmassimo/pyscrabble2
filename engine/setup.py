@@ -5,12 +5,15 @@ from hill_climbing_move_generator import HillClimbingMoveGenerator
 from minimax import Minimax
 from config import GameConfig
 
-def setup_game_state(word_lookup, name1, name2, web =True):
+def setup_game_state(word_lookup, name1, name2, debug =False, web =True):
     state = GameState(word_lookup, [
         ComputerPlayer(name1, web),
         ComputerPlayer(name2, web)
         ])
-    GameConfig.debug_channel = state.players[0].channel
+    
+    if debug == 'true':
+      GameConfig.debug = True
+      GameConfig.debug_channel = state.players[0].channel
 
     return state
 

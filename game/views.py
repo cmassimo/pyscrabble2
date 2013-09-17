@@ -25,10 +25,10 @@ def game(request):
 
         if request.session['game'] == None:
             word_lookup = WordLookup()
-            state = setup_game_state(word_lookup, post_params['player1_name'], post_params['player2_name'])
+            state = setup_game_state(word_lookup, 'com1', 'com2', post_params['debug'])
 
-            apply_setup_values(state, word_lookup, state.players[0], 0, 0)
-            apply_setup_values(state, word_lookup, state.players[1], 0, 0)
+            apply_setup_values(state, word_lookup, state.players[0], int(post_params['strategy1']), int(post_params['utility1']))
+            apply_setup_values(state, word_lookup, state.players[1], int(post_params['strategy2']), int(post_params['utility2']))
 
             request.session['game'] = state
         else:

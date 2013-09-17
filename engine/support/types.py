@@ -87,8 +87,16 @@ class TileList(list):
     def __init__(self):
         list.__init__(self)
 
+# che vedemo: ala
+# ['Q', 'L', 'E', 'I', 'A', 'E', 'I']
+# ['L', 'L', 'A', 'A']
+# can't remove L si ma quale
+
     def remove_many(self, tiles):
+        # print 'remove_many:'
+        # print [t1.letter for t1 in self]
         for t in tiles:
+            # print t.letter
             if t in self:
                 self.remove(t)
             else:
@@ -363,8 +371,8 @@ class Board(object):
     def occupied_squares(self):
         res = {}
 
-        for i in range(0, len(self.grid[0])):
-            for j in range(0, len(self.grid)):
+        for i in range(0, ScrabbleConfig.board_length):
+            for j in range(0, ScrabbleConfig.board_length):
                 s = self.grid[i][j]
                 if s.tile:
                     res[Coordinate(i, j)] = s
@@ -441,6 +449,7 @@ class GameState(object):
             return self.gs.current_player.name + " has passed.";
 
         def perform_dump_letters(self, dl):
+            
             self.gs.pass_count = 0
             letters = sorted(dl.letters)
 

@@ -7,4 +7,5 @@ urlpatterns = patterns('',
     url(r'^game$', views.game, name='game'),
     # url(r'^pusher/auth$', views.auth, name='auth'),
     url(r'^continue$', views.continue_game, name='continue'),
+    url(r'^notes$', views.notes, name='notes'),
 )

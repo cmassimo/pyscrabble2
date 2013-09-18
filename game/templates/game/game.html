@@ -27,14 +27,39 @@
       <div class='col-md-4'>
 
         <div id="players">
-          <h3>Players</h3>
+          <h3>Giocatori</h3>
           {% for player in request.session.game.players %}    
             <div class="player" id="player-{{ forloop.counter0 }}" data-pid="{{ player.pid }}">
-                <h4>{{ player.name }}, Score: <span class="playerScore">{{ player.score }}</span></h4>
+                <h4>{{ player.name }}, Punteggio: <span class="playerScore">{{ player.score }}</span></h4>
                 <div class="rack">
                 </div>
             </div>
           {% endfor %}
+        </div>
+        <div class='legend'>
+          <h3>Legenda</h3>
+          <table>
+            <tbody>
+              <tr>
+                <td class="sq"><div class="heightFix"></div></td><td>casella normale</td>
+              </tr>
+              <tr>
+                <td class="sq start"><div class="heightFix"></div></td><td>casella iniziale</td>
+              </tr>
+              <tr>
+                <td class="sq doubleLetter"><div class="heightFix"></div></td><td>raddoppia lettera</td>
+              </tr>
+              <tr>
+                <td class="sq tripleLetter"><div class="heightFix"></div></td><td>triplica lettera</td>
+              </tr>
+              <tr>
+                <td class="sq doubleWord"><div class="heightFix"></div></td><td>raddoppia parola</td>
+              </tr>
+              <tr>
+                <td class="sq tripleWord"><div class="heightFix"></div></td><td>triplica parola</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
       </div>
@@ -42,7 +67,7 @@
       <div class='col-md-2'>
 
         <div id="console">
-          <h3>Messages</h3>
+          <h3>Log</h3>
           <div class="inner">
           </div>
       </div>
@@ -57,7 +82,6 @@
 {% endblock %}
 
 {% block moar_js %}
-
   <script src="{% static 'events.js' %}"></script>
 {% endblock %}
 

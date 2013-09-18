@@ -21,9 +21,9 @@ def apply_setup_values(state, word_lookup, player, provider_code, utility_code):
   if provider_code == 0:
     player.provider = MoveGenerator(state, word_lookup)
   elif provider_code == 1:
-    player.provider = HillClimbingMoveGenerator(state, word_lookup, 15)
-  elif provider_code == 2:
     player.provider = HillClimbingMoveGenerator(state, word_lookup, 5)
+  elif provider_code == 2:
+    player.provider = HillClimbingMoveGenerator(state, word_lookup, 15)
   elif provider_code == 3:
     player.provider = Minimax(state, word_lookup)
   else:

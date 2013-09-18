@@ -30,3 +30,11 @@ body {
 #console .entry.alt { background-color: #eee; }
 #players h2, #console h2 { margin-top: 0; }
 
+.heightFix { width: 32px; height: 32px; }
+.legend .doubleLetter { background-color: midnightblue; }
+.legend .tripleLetter { background-color: darkgreen; }
+.legend .doubleWord { background-color: orange; }
+.legend .tripleWord { background-color: red; }
+.legend .start { background-color: gray; }
+.legend td { padding-left:20px; }
+.legend .sq { border: 1px solid #ccc; padding: 0; padding:0;}

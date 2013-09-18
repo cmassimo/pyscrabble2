@@ -1,0 +1,123 @@
+:title: Pyscrabble2 presentation
+:data-transition-duration: 1500
+
+
+----
+
+Pyscrabble2
+===========
+un progetto di:
+
+Carlo Maria Massimo
+-------------------
+Giorgio Piantella
+-----------------
+
+----
+
+Il progetto
+===========
+Il progetto è consistito nel **porting ed estensione** di un progetto esistente, sharpscrabble_, scritto in F#.
+Il porting è stato effettuato in **Python** per questioni di **efficienza** unita alla semplicità d'uso del linguaggio.
+
+.. _sharpscrabble: http://www.python.org
+
+----
+
+Il software
+===========
+Sono state impiegate le seguenti strategie:
+
+* Brute-force
+
+* Hill climbing classico con riavvio casuale limitato
+
+* Brute force con minimax su 3 livelli di profondità
+
+----
+
+Brute-force
+===========
+Vengono generate tutte le mosse a partire da tutte le parole valide (nel dizionario) generabili con:
+
+* le lettere nel rack del giocatore corrente più
+
+* ognuna delle lettere nelle caselle già occupate sulla tavola
+
+Questa strategia è garantisce buoni risultati in termini di punteggi sacrificando l'efficienza.
+
+----
+
+Hill climbing
+=============
+Vengono generate ad una ad una le mosse con le stesse modalità della strategia brute-force calcolando di volta in volta il punteggio per la mossa generata e ritornando il massimo locale.
+Questa strategia prevede un **numero limitato** di riavvii casuali per cercare di convergere al massimo locale.
+
+Delle strategie realizzate è la più performante in termini di **spazio e tempo** ma è piuttosto
+debole in termini di punteggi realizzati.
+
+----
+
+Minimax
+=======
+Algoritmo minimax che sfrutta la ricerca brute-force (ripetibile) a profondità ed ampiezza 3 ovvero:
+
+* 3 mosse per livello di profondità
+
+* 2 mosse per MAX ed una per MIN
+
+Alla fine della ricerca sceglie la mossa iniziale che determina un punteggio totale migliore per il giocatore a livello 3.
+È la strategia di ricerca più onerosa delle 3, il taglio in profondià ma soprattutto in ampiezza si è reso necessario per questioni di praticabilità
+
+----
+
+Funzioni di utilità
+===================
+Sono state implementate 4 funzioni di utilità per determinare la bontà di una mossa:
+
+* *max_score*: viene scelta la mossa con punteggio relativo maggiore (non posizionata, solo punteggi delle lettere);
+
+* *save_common*: compone le mosse solo le tessere con frequenza minore (punteggio maggiore) e sceglie la migliore;
+
+* *only_play_7s*: genera solo mosse di lunghezza 7 se possibile;
+
+* *only_play_over_5*: genera solo mosse di lunghezza maggiore di 5 se possible;
+
+* *use_bonus_squares*: genera solo mosse che massimizzano l'uso di caselle moltiplicatrici una volta posizionate.
+
+----
+
+Statistiche strategie
+=====================
+
+----
+
+Statistiche funzioni utilità
+============================
+
+----
+
+Problemi
+========
+* efficienza delle operazioni di validazione e valutazione delle mosse
+
+* ridotta capacità di calcolo non ha consentito indagini con valori troppo elevati
+
+* la strategia HC è molto debole
+
+* bug nella generazione delle mosse
+
+----
+
+Todo
+====
+* modellare in maniera più efficiente il gioco per il punto 1) slide precedente
+
+* migliorare la strategia di convergenza di HC
+
+* ottimizzare la generazione e valutazione/validazione delle mosse (multithreading)
+
+----
+
+Conclusioni
+===========

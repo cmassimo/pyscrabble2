@@ -24,6 +24,31 @@
 
       </div>
       <div class='col-md-4'>
+        <div class='legend'>
+          <h3>Legenda</h3>
+          <table>
+            <tbody>
+              <tr>
+                <td class="sq"><div class="heightFix"></div></td><td>casella normale</td>
+              </tr>
+              <tr>
+                <td class="sq start"><div class="heightFix"></div></td><td>casella iniziale</td>
+              </tr>
+              <tr>
+                <td class="sq doubleLetter"><div class="heightFix"></div></td><td>raddoppia lettera</td>
+              </tr>
+              <tr>
+                <td class="sq tripleLetter"><div class="heightFix"></div></td><td>triplica lettera</td>
+              </tr>
+              <tr>
+                <td class="sq doubleWord"><div class="heightFix"></div></td><td>raddoppia parola</td>
+              </tr>
+              <tr>
+                <td class="sq tripleWord"><div class="heightFix"></div></td><td>triplica parola</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
       <div class='col-md-2'>
       </div>
@@ -35,15 +60,15 @@
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-          <h4 class="modal-title">Welcome to PyScrabble2!</h4>
+          <h4 class="modal-title">Benvenuti su PyScrabble2!</h4>
         </div>
 
         <div class="modal-body">
-          <p>This is a Python porting of <a href='https://code.google.com/p/sharpscrabble/' target='_blank'>F# Scrabble</a><br> we did for the course of Artificial Intelligence.</br>
-            Notably a 3-level minimax (width and depth) with alpha-beta pruning has been added.
+          <p>Questo &egrave; un porting in python di <a href='https://code.google.com/p/sharpscrabble/' target='_blank'>sharpscrabble</a> che &egrave; stato realizzato come progetto del corso di Intelligenza Artificiale 2012/2013.</br>
+            Rispetto al progetto originario &egrave; stata aggiunta una strategia minimax a tre livelli, sia di ampiezza che di profondit&agrave; che usa una ricerca brute force.
           </p>
 
-          <h2>Configure players</h2>
+          <h2>Imposta i giocatori</h2>
           
           <form action='{% url 'game' %}' class="form-horizontal" role="form" id='new_game' method='post'>
             {% csrf_token %}
@@ -51,7 +76,7 @@
             <div class='col-md-6 col-xs-6 conf'>
               <h4>Com 1</h4>
               <div class="form-group">
-                <h5>Strategies</h5>
+                <h5>Strategie</h5>
                 <div class="btn-group" data-toggle="buttons">
                   <label class="btn btn-primary">
                     <input type="radio" name="strategy1" id="strategy1" value='0' checked > BF
@@ -66,7 +91,7 @@
                     <input type="radio" name="strategy1" id="strategy1" value='3'> MM
                   </label>
                 </div>
-                <h5>Utility functions</h5>
+                <h5>Funzioni di utilit&agrave;</h5>
                 <div class="btn-group" data-toggle="buttons">
                   <label class="btn btn-primary">
                     <input type="radio" name="utility1" id="utility1" value='0' checked > ms
@@ -90,7 +115,7 @@
             <div class='col-md-6 col-xs-6 conf'>
               <h4>Com 2</h4>
               <div class="form-group">
-                <h5>Strategies</h5>
+                <h5>Strategie</h5>
                 <div class="btn-group" data-toggle="buttons">
                   <label class="btn btn-primary">
                     <input type="radio" name="strategy2" id="strategy2" value='0' checked> BF
@@ -106,7 +131,7 @@
                   </label>
                 </div>
               </div>
-              <h5>Utility functions</h5>
+              <h5>Funzioni di utilit&agrave;</h5>
               <div class="form-group">
                 <div class="btn-group" data-toggle="buttons">
                   <label class="btn btn-primary">
@@ -130,10 +155,10 @@
 
             <div class='conf'>
               <div class="form-group">
-                <h5>Print debug?</h5>
+                <h5>Mostra debug?</h5>
                 <div class="btn-group" data-toggle="buttons">
                   <label class="btn btn-primary">
-                    <input type="radio" name="debug" id="debug" value='true'> yes
+                    <input type="radio" name="debug" id="debug" value='true'> si
                   </label>
                   <label class="btn btn-primary">
                     <input type="radio" name="debug" id="debug" value='false' checked> no
@@ -142,32 +167,32 @@
               </div>
             </div>
 
-            <h5>Legend</h5>
+            <h5>Legenda</h5>
             <dl class="dl-horizontal">
               <dt>BF</dt>
               <dd>brute force</dd>
               <dt>HC5</dt>
-              <dd>hill climbing with 5 random restarts</dd>
+              <dd>hill climbing con 5 random restarts</dd>
               <dt>HC15</dt>
-              <dd>hill climbing with 15 random restarts</dd>
+              <dd>hill climbing con 15 random restarts</dd>
               <dt>MM</dt>
-              <dd>minimax 3-level deep and wide with brute force strategy</dd>
+              <dd>minimax a 3 livelli con brute force</dd>
               
               <dt>ms</dt>
-              <dd>maximum score move</dd>
+              <dd>gioca mossa con maximum score</dd>
               <dt>sc</dt>
-              <dd>save most common tiles</dd>
+              <dd>tiene da parte le tessere pi&ugrave; comuni</dd>
               <dt>op7</dt>
-              <dd>only plays 7-letters long moves</dd>
+              <dd>gioca solo mosse lunghe sette tessere</dd>
               <dt>opo5</dt>
-              <dd>only plays moves longer than 5</dd>
+              <dd>gioca solo mosse di lunghezza maggiore a 5</dd>
               <dt>ubs</dt>
-              <dd>tries to maximize bonus squares usage</dd>
+              <dd>massimizza l'uso di caselle bonus</dd>
             </dl>
             
             <div class="form-group conf">
               <div class="">
-                <button type="submit" class="btn btn-info">Go!</button>
+                <button type="submit" class="btn btn-info">Via!</button>
               </div>
             </div>
           </form>

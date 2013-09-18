@@ -42,6 +42,9 @@ def game(request):
     elif request.method == 'GET':
         return redirect('/')
 
+def notes(request):
+    return render(request, 'game/notes.html')
+
 # @csrf_exempt
 # def auth(request):
 #     channel_name = request.POST['channel_name']

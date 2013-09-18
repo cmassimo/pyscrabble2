@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+
+{% block pagetitle %} Home {% endblock %}
+
+{% block content %}
+    <div class="fallback-message">
+      <p>Your browser <b>doesn't support the features required</b> by impress.js, so you are presented with a simplified version of this  presentation.</p>
+      <p>For the best experience please use the latest <b>Chrome</b>, <b>Safari</b> or <b>Firefox</b> browser.</p>
+    </div>
+
+    <div id="impress" data-transition-duration="1500"><div class="step" step="0" data-x="0" data-y="0"><h1 id="pyscrabble2">Pyscrabble2</h1><p>un progetto di:</p><h2 id="carlo-maria-massimo">Carlo Maria Massimo</h2><h2 id="giorgio-piantella">Giorgio Piantella</h2></div><div class="step" step="1" data-x="1600" data-y="0"><h1 id="il-progetto">Il progetto</h1><p>Il progetto &#xE8; consistito nel <strong>porting ed estensione</strong> di un progetto esistente, <a href="http://www.python.org">sharpscrabble</a>, scritto in F#.
+Il porting &#xE8; stato effettuato in <strong>Python</strong> per questioni di <strong>efficienza</strong> unita alla semplicit&#xE0; d'uso del linguaggio.</p></div><div class="step" step="2" data-x="3200" data-y="0"><h1 id="il-software">Il software</h1><p>Sono state impiegate le seguenti strategie:</p><ul><li>Brute-force</li><li>Hill climbing classico con riavvio casuale limitato</li><li>Brute force con minimax su 3 livelli di profondit&#xE0;</li></ul></div><div class="step" step="3" data-x="4800" data-y="0"><h1 id="brute-force">Brute-force</h1><p>Vengono generate tutte le mosse a partire da tutte le parole valide (nel dizionario) generabili con:</p><ul><li>le lettere nel rack del giocatore corrente pi&#xF9;</li><li>ognuna delle lettere nelle caselle gi&#xE0; occupate sulla tavola</li></ul><p>Questa strategia &#xE8; garantisce buoni risultati in termini di punteggi sacrificando l'efficienza.</p></div><div class="step" step="4" data-x="6400" data-y="0"><h1 id="hill-climbing">Hill climbing</h1><p>Vengono generate ad una ad una le mosse con le stesse modalit&#xE0; della strategia brute-force calcolando di volta in volta il punteggio per la mossa generata e ritornando il massimo locale.
+Questa strategia prevede un <strong>numero limitato</strong> di riavvii casuali per cercare di convergere al massimo locale.</p><p>Delle strategie realizzate &#xE8; la pi&#xF9; performante in termini di <strong>spazio e tempo</strong> ma &#xE8; piuttosto
+debole in termini di punteggi realizzati.</p></div><div class="step" step="5" data-x="8000" data-y="0"><h1 id="minimax">Minimax</h1><p>Algoritmo minimax che sfrutta la ricerca brute-force (ripetibile) a profondit&#xE0; ed ampiezza 3 ovvero:</p><ul><li>3 mosse per livello di profondit&#xE0;</li><li>2 mosse per MAX ed una per MIN</li></ul><p>Alla fine della ricerca sceglie la mossa iniziale che determina un punteggio totale migliore per il giocatore a livello 3.
+&#xC8; la strategia di ricerca pi&#xF9; onerosa delle 3, il taglio in profondi&#xE0; ma soprattutto in ampiezza si &#xE8; reso necessario per questioni di praticabilit&#xE0;</p></div><div class="step" step="6" data-x="9600" data-y="0"><h1 id="funzioni-di-utilita">Funzioni di utilit&#xE0;</h1><p>Sono state implementate 4 funzioni di utilit&#xE0; per determinare la bont&#xE0; di una mossa:</p><ul><li><em>max_score</em>: viene scelta la mossa con punteggio relativo maggiore (non posizionata, solo punteggi delle lettere);</li><li><em>save_common</em>: compone le mosse solo le tessere con frequenza minore (punteggio maggiore) e sceglie la migliore;</li><li><em>only_play_7s</em>: genera solo mosse di lunghezza 7 se possibile;</li><li><em>only_play_over_5</em>: genera solo mosse di lunghezza maggiore di 5 se possible;</li><li><em>use_bonus_squares</em>: genera solo mosse che massimizzano l'uso di caselle moltiplicatrici una volta posizionate.</li></ul></div><div class="step" step="7" data-x="11200" data-y="0"><h1 id="statistiche-strategie">Statistiche strategie</h1></div><div class="step" step="8" data-x="12800" data-y="0"><h1 id="statistiche-funzioni-utilita">Statistiche funzioni utilit&#xE0;</h1></div><div class="step" step="9" data-x="14400" data-y="0"><h1 id="problemi">Problemi</h1><ul><li>efficienza delle operazioni di validazione e valutazione delle mosse</li><li>ridotta capacit&#xE0; di calcolo non ha consentito indagini con valori troppo elevati</li><li>la strategia HC &#xE8; molto debole</li></ul></div><div class="step" step="10" data-x="16000" data-y="0"><h1 id="todo">Todo</h1><ul><li>modellare in maniera pi&#xF9; efficiente il gioco per il punto 1) slide precedente</li><li>migliorare la strategia di convergenza di HC</li><li>ottimizzare la generazione e valutazione/validazione delle mosse (multithreading)</li></ul></div><div class="step" step="11" data-x="17600" data-y="0"><h1 id="conclusioni">Conclusioni</h1></div>
+
+      <!-- <div id="overview" class="step" step="10" data-x="21800" data-y="0" scale='10'>
+      </div> -->
+
+</div>
+{% endblock %}
+
+{% block moar_js %}
+  <script src="{% static 'impress.js' %}"></script>
+  <script>impress().init();</script>
+{% endblock %}
+{% block moar_css %}
+  <link rel="stylesheet" href="{% static 'impress.css' %}">
+{% endblock %}

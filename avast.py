@@ -30,17 +30,13 @@ class GameThread (threading.Thread):
 
 
 def do_game(q, i, ui, j, uj, wl, n):
-    state = setup_game_state(wl, 'com1', 'com2', False)
+    state = setup_game_state(wl, 'com1', 'com2', False, False)
     apply_setup_values(state, wl, state.players[0], i, ui)
     apply_setup_values(state, wl, state.players[1], j, uj)
-
     # try:
     # start = time()
-
     outcome = state.continue_game()
-
     # elapsed = time() - start
-
     q.put([ n, provider_code_mapping(i), provider_code_mapping(j), utility_code_mapping(ui), utility_code_mapping(uj), outcome[0], outcome[1] ])
     # except Exception as e:
         # print e.args
@@ -50,33 +46,33 @@ def do_game(q, i, ui, j, uj, wl, n):
 # q = Queue()
 # do_game(q, 0, 3, 2, 0, WordLookup(), 0)
 
-with open('report.csv', 'wb') as csvfile:
+with open('report0.csv', 'wb') as csvfile:
     writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
     writer.writerow(["match #", "com1 strategy", "com2 strategy", "com1 utility", "com2 utility", "winning strategy", "winning utility", "seconds"])
 
-    for i in [0,1,3]:
-        for j in [0,1,3]:
-            for ui in [0,1,4]:
-                for uj in [0,1,4]:
-                    print i, ui, j, uj
-                    threads = []
-                    q = Queue()
+    # for i in [0,1,3]:
+    #     for j in [0,1,3]:
+    for ui in [0,1,4]:
+        for uj in [0,1,4]:
+            print i, ui, j, uj
+            threads = []
+            q = Queue()
 
-                    for n in range(0, 5):
-                        t = GameThread(q, i, ui, j, uj, WordLookup(), n)
-                        t.start()
-                        threads.append(t)
+            for n in range(0, 5):
+                t = GameThread(q, 0, ui, 0, uj, WordLookup(), n)
+                t.start()
+                threads.append(t)
 
-                    for t in threads:
-                        t.join()
-                        
-                    rows = []
-                    while not q.empty():
-                        rows.append(q.get())
-                    rows.sort(key=lambda r: r[0])
+            for t in threads:
+                t.join()
+                
+            rows = []
+            while not q.empty():
+                rows.append(q.get())
+            rows.sort(key=lambda r: r[0])
 
-                    for r in rows:
-                        writer.writerow(r)
+            for r in rows:
+                writer.writerow(r)
 
 
 csvfile.close()

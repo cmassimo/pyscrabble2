@@ -104,10 +104,10 @@ class MoveGenerator(object):
                 if move.is_valid:
                     vmoves.append(move)
 
-                if GameConfig.debug:
-                    the_pusher[GameConfig.debug_channel].trigger('debug', [{'x': c.x, 'y': c.y, 'tile': {'letter': t.letter, 'score': t.score}} for c, t in move.letters.items()])
-                    time.sleep(1)
-                    the_pusher[GameConfig.debug_channel].trigger('clear_debug')
+                    if GameConfig.debug:
+                        the_pusher[GameConfig.debug_channel].trigger('debug', [{'x': c.x, 'y': c.y, 'tile': {'letter': t.letter, 'score': t.score}} for c, t in move.letters.items()])
+                        time.sleep(1)
+                        the_pusher[GameConfig.debug_channel].trigger('clear_debug')
 
         return vmoves
 

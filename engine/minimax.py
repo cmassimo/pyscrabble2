@@ -7,12 +7,14 @@ import time
 
 
 class Minimax(object):
-    def __init__(self, state, word_lookup, depth =2):
+    def __init__(self, state, word_lookup, depth =3):
         self.lookup = word_lookup
         self.max_depth = depth
-        self.moves_score = {}
+        # self.moves_score = {}
         self.moves = []
+        self.scores = []
         self.state = state
+        self.cut = False
 
     @staticmethod
     def utility_state(state):
@@ -26,7 +28,9 @@ class Minimax(object):
             raise (InvalidMoveException("Move violates position requirements or forms one or more invalid words."))
 
         state.playing_board.put(move)
+
         state.current_player.add_score(move.score())
+
         state.current_player.tiles.remove_many([l for _, l in move.letters.items()])
         state.give_tiles(state.current_player, len(move.letters))
 
@@ -47,7 +51,7 @@ class Minimax(object):
 
         # dup players
         for cp in state.computer_players:
-            new_cp = ComputerPlayer(cp.name)
+            new_cp = ComputerPlayer(cp.name, False)
 
             # dup player's tiles and attrs
             for t in cp.tiles:
@@ -80,14 +84,18 @@ class Minimax(object):
         # print [t.letter for t in tiles_in_hand]
         if depth == 0:
             util = self.utility_state(state)
-            if self.moves:
-                self.moves_score.setdefault(self.moves[0], util)
-                self.moves_score[self.moves[0]] = max(util, self.moves_score[self.moves[0]])
-                del self.moves[-1]
+            # if self.moves:
+                # self.moves_score.setdefault(self.moves[0], util)
+                # self.moves_score[self.moves[0]] = max(util, self.moves_score[self.moves[0]])
+                # del self.moves[-1]
+            if not self.cut:
+                self.scores.append(util)
+            self.cut = True
+
             return util
-        else:
-            if len(self.moves) > 1:
-                del self.moves[-1]
+        # else:
+        #     if len(self.moves) > 1:
+        #         del self.moves[-1]
 
         v = -10000
 
@@ -95,14 +103,18 @@ class Minimax(object):
         # print [t.letter for t in tiles_in_hand]
 
         for succ, move in self.successors(state, tiles_in_hand, utility_mapper):
-            tih = deepcopy(succ.current_player.tiles)
-            self.moves.append(move)
+            tih = [Tile(t.letter) for t in succ.current_player.tiles]
+            if depth == self.max_depth:
+                self.moves.append(move)
             v = max(v, self.min_value(tih, utility_mapper, succ, alpha, beta, depth-1))
 
             if v >= beta:
                 return v
 
             alpha = max(alpha, v)
+
+            if depth == self.max_depth:
+                self.cut = False
 
         return v
 
@@ -112,31 +124,33 @@ class Minimax(object):
 
         if depth == 0:
             util = self.utility_state(state)
-            if self.moves:
-                self.moves_score.setdefault(self.moves[0], util)
-                self.moves_score[self.moves[0]] = max(util, self.moves_score[self.moves[0]])
+            # if self.moves:
+                # self.moves_score.setdefault(self.moves[0], util)
+                # self.moves_score[self.moves[0]] = max(util, self.moves_score[self.moves[0]])
                 # print self.moves_score
-                del self.moves[-1]
+                # del self.moves[-1]
+            if not self.cut:
+                self.scores.append(util)
+            self.cut = True
+
             return util
-        else:
-            if len(self.moves) > 1:
-                del self.moves[-1]
+        # else:
+        #     if len(self.moves) > 1:
+        #         del self.moves[-1]
 
         v = 10000
 
         # print '==='
         # print [t.letter for t in tiles_in_hand]
         for succ, move in self.successors(state, tiles_in_hand, utility_mapper):
-            tih = deepcopy(succ.current_player.tiles)
-            v = min(v, -self.max_value(tih, utility_mapper, succ, alpha, beta, depth-1))
-
-            self.move = move
+            tih = [Tile(t.letter) for t in succ.current_player.tiles]
+            v = min(v, self.max_value(tih, utility_mapper, succ, alpha, beta, depth-1))
 
             if v <= alpha:
                 return v
 
             beta = min(beta, v)
-
+        
         return v
 
     def successors(self, state, tiles_in_hand, utility_mapper):
@@ -154,13 +168,22 @@ class Minimax(object):
     def alpha_beta_search(self, tiles_in_hand, state, utility_mapper):
         score = self.max_value(tiles_in_hand, utility_mapper, self.duplicate_state(state), -10000, 10000, deepcopy(self.max_depth))
 
-        # print self.moves_score
-        # print tiles_in_hand
+        print self.moves
+        print self.scores
 
-        if self.moves_score:
-            to_be_played = max(self.moves_score.items(), key=lambda kv: kv[1])[0]
+        if self.scores:
+            max_score_index = self.scores.index(min(self.scores))
+            if self.moves:
+                to_be_played = self.moves[max_score_index]
+            else:
+                to_be_played = None
         else:
             to_be_played = None
+
+        # if self.moves_score:
+        #     to_be_played = max(self.moves_score.items(), key=lambda kv: kv[1])[0]
+        # else:
+        #     to_be_played = None
 
         if to_be_played:
             if GameConfig.debug:
@@ -195,7 +218,7 @@ class Minimax(object):
                     moves.append( Move( dict( [ (start.next(o, i), Tile(word.upper()[i])) for i in xrange(0, len(word)) ] ), state ) )
 
         fm = sorted([move for move in moves if utility_mapper(tiles_in_hand, move.letters, state) > 0.0], key=lambda i: -utility_mapper(tiles_in_hand, i.letters, state))
-        return fm[0:3]
+        return fm[0:self.max_depth-1]
 
     @staticmethod
     def valid_moves(c, word, o, board, state):
@@ -205,10 +228,10 @@ class Minimax(object):
         for i in range(0, len(word)):
             if word.upper()[i] == letter:
                 if o == Orientation.horizontal:
-                    if (c.x - i) >= 0 and (c.x + len(word) - i) <= 14:
+                    if (c.x - i) >= 0 and (c.x + len(word) - i - 1) <= 14:
                         unchecked_starts.append( Coordinate(c.x - i, c.y) )
                 else:
-                    if (c.y - i) >= 0 and (c.y + len(word) - i) <= 14:
+                    if (c.y - i) >= 0 and (c.y + len(word) - i - 1) <= 14:
                         unchecked_starts.append( Coordinate(c.x, c.y - i) )
 
         vmoves = []
@@ -254,8 +277,10 @@ class Minimax(object):
                         moves.append(move)
 
         nps = sorted([move for move in moves if utility_mapper(tiles_in_hand, move.letters, state) > 0.0], key=lambda i: -utility_mapper(tiles_in_hand, i.letters, state))
-        return nps[0:3]
+        return nps[0:self.max_depth-1]
 
     def think(self, tiles_in_hand, utility_mapper):
+        self.moves = []
+        self.scores = []
         # print "tile bag len: %2i" % len(Game.instance.tile_bag.inventory)
         return self.alpha_beta_search(tiles_in_hand, self.state, utility_mapper)

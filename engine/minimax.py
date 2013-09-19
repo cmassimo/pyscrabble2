@@ -168,8 +168,8 @@ class Minimax(object):
     def alpha_beta_search(self, tiles_in_hand, state, utility_mapper):
         score = self.max_value(tiles_in_hand, utility_mapper, self.duplicate_state(state), -10000, 10000, deepcopy(self.max_depth))
 
-        print self.moves
-        print self.scores
+        # print self.moves
+        # print self.scores
 
         if self.scores:
             max_score_index = self.scores.index(min(self.scores))

@@ -18,40 +18,95 @@ Giorgio Piantella
 Il progetto
 ===========
 Il progetto è consistito nel **porting ed estensione** di un progetto esistente, sharpscrabble_, scritto in F#.
+
 Il porting è stato effettuato in **Python** per questioni di **efficienza** unita alla semplicità d'uso del linguaggio.
 
-.. _sharpscrabble: http://www.python.org
+La realizzazione ha richiesto all'incirca un *centinaio di ore*, suddivise tra:
+
+* analisi del software esistente
+
+* porting
+
+* implementazione della gui
+
+* estensione della strategia di ricerca
+
+.. _sharpscrabble: https://code.google.com/p/sharpscrabble/
 
 ----
 
 Il software
 ===========
-Sono state impiegate le seguenti strategie:
+
+Il software implementa le seguenti strategie di ricerca:
 
 * Brute-force
 
 * Hill climbing classico con riavvio casuale limitato
 
-* Brute force con minimax su 3 livelli di profondità
+* Brute force con minimax su 4 livelli di profondità e 3 di ampiezza
+
+----
+
+Tuttle le strategie fanno capo ad una struttura dati **dizionario**, caricata a partire da una wordlist di circa **280000 parole valide** dello Scrabble italiano.
+
+La struttura dati è composta da coppie chiave/valore del tipo:
+
+code'ceiimnnooprs': ['comprensioni', 'ricompensino']code
+
+che permette, data una sequenza ordinata di lettere di **recuperare tutte le possibili parole valide ottenibili in tempo costante**.
+
+----
+
+Gli algoritmi di ricerca sono stati mantenuti piuttosto naive per non incidere troppo sul tempo di esecuzione.
+Si è deciso pertanto di:
+
+* non implementare la generazione di  mosse con la lettera jolly '*'
+
+* non implementare agganci paralleli ad una parola già presente
+
+Queste due limitazioni restringono lo spazio di ricerca.
 
 ----
 
 Brute-force
 ===========
-Vengono generate tutte le mosse a partire da tutte le parole valide (nel dizionario) generabili con:
+Questa strategia si compone dei seguenti passi:
 
-* le lettere nel rack del giocatore corrente più
+* generazione di tutte le mosse a partire da tutte le parole valide (nel dizionario) generabili con:
 
-* ognuna delle lettere nelle caselle già occupate sulla tavola
+  * le lettere nel rack del giocatore corrente più
 
-Questa strategia è garantisce buoni risultati in termini di punteggi sacrificando l'efficienza.
+  * ognuna delle lettere nelle caselle già occupate sulla tavola
+
+* validazione delle mosse sulla tavola (posizione, side-effects)
+
+* calcolo del punteggio delle mosse
+
+* restituzione della mossa con utilità maggiore a seconda della funzione di utilità scelta.
+
+Questa strategia garantisce buoni risultati in termini di punteggi sacrificando l'efficienza.
 
 ----
 
 Hill climbing
 =============
-Vengono generate ad una ad una le mosse con le stesse modalità della strategia brute-force calcolando di volta in volta il punteggio per la mossa generata e ritornando il massimo locale.
-Questa strategia prevede un **numero limitato** di riavvii casuali per cercare di convergere al massimo locale.
+Ricerca locale, consta dei seguenti passi:
+
+* generazione della prossima mossa disponibile secondo gli stessi criteri della ricerca BF
+
+* validazione e calcolo del punteggio della mossa corrente
+
+* confronto con il massimo trovato sino a quel momento
+
+* se il punteggio è inferiore al massimo corrente lo ritorna oppure prosegue nella ricerca.
+
+----
+
+Ogni qual volta la procedura ritorna, il risultato viene tenuto da parte, si riavvia la ricerca in maniera *casuale* e si ripete
+l'iterazione.
+
+Alla fine si ritorna il meglio degli *n riavvii*, questo per cercare di migliorare la convergenza al massimo globale.
 
 Delle strategie realizzate è la più performante in termini di **spazio e tempo** ma è piuttosto
 debole in termini di punteggi realizzati.
@@ -60,22 +115,29 @@ debole in termini di punteggi realizzati.
 
 Minimax
 =======
-Algoritmo minimax che sfrutta la ricerca brute-force (ripetibile) a profondità ed ampiezza 3 ovvero:
+Algoritmo minimax che sfrutta la ricerca brute-force (ripetibile) a profondità 4 ed ampiezza 3 ovvero:
 
-* 3 mosse per livello di profondità
+* 3 mosse per ogni livello di profondità
 
-* 2 mosse per MAX ed una per MIN
+* 2 mosse per MAX e 2 per MIN
 
-Alla fine della ricerca sceglie la mossa iniziale che determina un punteggio totale migliore per il giocatore a livello 3.
-È la strategia di ricerca più onerosa delle 3, il taglio in profondià ma soprattutto in ampiezza si è reso necessario per questioni di praticabilità
+Con queste impostazioni la ricerca ritorna la mossa iniziale migliore per MAX in termini di minimizzazione del punteggio raggiunto da  MIN.
 
+Aumentando di un livello l'ampiezza le prestazioni computazionali crollano senza ottenere un guadagno significativo in termini di punteggi, aumentando la profondità di ricerca si notano subito netti miglioramenti di prestazioni (la computazione rimane molto onerosa!)
+
+----
+
+.. image:: minimax.png
+    :height: 544px
+    :width: 707px
+    
 ----
 
 Funzioni di utilità
 ===================
 Sono state implementate 4 funzioni di utilità per determinare la bontà di una mossa:
 
-* *max_score*: viene scelta la mossa con punteggio relativo maggiore (non posizionata, solo punteggi delle lettere);
+* *max_score*: viene scelta la mossa con punteggio maggiore;
 
 * *save_common*: compone le mosse solo le tessere con frequenza minore (punteggio maggiore) e sceglie la migliore;
 
@@ -89,11 +151,22 @@ Sono state implementate 4 funzioni di utilità per determinare la bontà di una 
 
 Statistiche strategie
 =====================
+Su un campione di 100 partite per ogni combinazione, con le funzioni di utilità distribuite uniformemente, questi sono stati i risultati:
+
+.. image:: table_games.png
+    :height: 180px
+    :width: 547px
 
 ----
 
 Statistiche funzioni utilità
 ============================
+
+A parità di strategia, su un campione di 100 partite con le funzioni di utilità distribuite uniformemente:
+
+.. image:: comportamento_utility.png
+    :height: 454px
+    :width: 806px
 
 ----
 
@@ -101,17 +174,15 @@ Problemi
 ========
 * efficienza delle operazioni di validazione e valutazione delle mosse
 
-* ridotta capacità di calcolo non ha consentito indagini con valori troppo elevati
+* ridotta capacità di calcolo non ha consentito indagini con valori troppo elevati (specialmente minimax)
 
-* la strategia HC è molto debole
-
-* bug nella generazione delle mosse
+* la strategia HC è molto debole, margine di miglioramento
 
 ----
 
 Todo
 ====
-* modellare in maniera più efficiente il gioco per il punto 1) slide precedente
+* modellare in maniera più efficiente il gioco per il primo punto della slide precedente
 
 * migliorare la strategia di convergenza di HC
 
@@ -121,3 +192,11 @@ Todo
 
 Conclusioni
 ===========
+
+Lo studio di questo gioco da un punto di vista dell'IA ha convalidato la nostra ipotesi che in questo gioco una strategia meramente greedy paghi.
+
+L'unico tipo di strategia che può competere con la ricerca greedy pura è l'approccio minimax, che però (in questo caso) è implementato proprio utilizzando la medesima strategia.
+
+Una modellazione attenta alle problematiche di uso delle risorse di Minimax potrebbe permettere a tale strategia di estendere lo spazio di ricerca mantenendo prestazioni accettabili e di restituire risultati eccellenti in termini di punteggi realizzati.
+
+

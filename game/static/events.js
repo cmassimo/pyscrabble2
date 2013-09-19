@@ -66,7 +66,7 @@ $(function() {
   channel1.bind('pusher:subscription_succeeded', function() {
     console.log('--- channel1 subscription_succeeded');
 
-    entry = $("<div class='entry first'>Game started.</div>");
+    entry = $("<div class='entry first'>Gioco iniziato.</div>");
     log(entry);
 
     $.get("/continue");
@@ -100,7 +100,9 @@ $(function() {
     console.log('game_over');
     console.log(data);
 
-    entry = $("<div class='entry'>Game has ended! Finalising scores.</div>");
+    entry = $("<div class='entry'>Gioco terminato!</div>");
+    log(entry);
+    entry = $("<div class='entry'>Vince " + data.game_outcome.winners[0].name + " con " + data.game_outcome.winners[0].score + " punti</div>");
     log(entry);
   });
 
@@ -134,8 +136,8 @@ $(function() {
     console.log('game_over');
     console.log(data);
 
-    entry = $("<div class='entry'>Game has ended! Finalising scores.</div>");
-    log(entry);
+    // entry = $("<div class='entry'>Game has ended! Finalising scores.</div>");
+    // log(entry);
   });
 
   channel2.bind('tiles_updated', function(data) {

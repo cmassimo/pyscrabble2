@@ -447,7 +447,7 @@ class GameState(object):
 
         def perform_pass(self):
             self.gs.pass_count += 1
-            return self.gs.current_player.name + " has passed.";
+            return self.gs.current_player.name + " passa il turno.";
 
         def perform_dump_letters(self, dl):
             
@@ -459,7 +459,7 @@ class GameState(object):
             self.gs.tile_bag.put(letters)
             self.gs.give_tiles(self.gs.current_player, len(letters))
 
-            return self.gs.current_player.name + " exchanged letters.";
+            return self.gs.current_player.name + " ha cambiato lettere.";
 
         def perform_move(self, turn):
             self.gs.pass_count = 0
@@ -473,7 +473,7 @@ class GameState(object):
             self.gs.current_player.tiles.remove_many([l for _, l in turn.letters.items()])
             self.gs.give_tiles(self.gs.current_player, len(turn.letters))
 
-            return self.gs.current_player.name + " scored " + str(move.score()) + " points ";
+            return self.gs.current_player.name + " totalizza " + str(move.score()) + " punti con: " + ''.join([t.letter for _, t in move.letters.items()]);
 
         def take_turn(self, turn):
             summary = turn.perform(self)

@@ -14,6 +14,9 @@ def setup_game_state(word_lookup, name1, name2, debug =False, web =True):
     if debug == 'true':
       GameConfig.debug = True
       GameConfig.debug_channel = state.players[0].channel
+    else:
+      GameConfig.debug = False
+      GameConfig.debug_channel = ""
 
     return state
 
